@@ -62,37 +62,48 @@ class Phrase:
 
     def load_ids_fname(self, fname):
         with codecs.open(fname, "r", "utf-8") as f:
-            for uid in f:
-                uid = uid.strip("\r\n")
-                if fname == DATA_FOLDER + "uidsNew.txt":
-                    if uid != u"": self.ids.append(uid)
-                elif fname == DATA_FOLDER + "uidsUsed.txt":
-                    if uid != u"": self.idsUsed.append(uid)
+            uids = f.read().split("\r\n")
+        for uid in uids:
+            if fname == DATA_FOLDER + "uidsNew.txt":
+                if uid != u"": self.ids.append(uid)
+            elif fname == USEDUIDS_FILE:
+                if uid != u"": self.idsUsed.append(uid)
 
     def update_users(self):
-        self.load_ids_fname(DATA_FOLDER + "uidsUsed.txt")
+        self.load_ids_fname(USEDUIDS_FILE)
         current_ids = get_ids()
         for uid in current_ids:
             uid = str(uid)
             if uid not in self.idsUsed:
                 self.ids.append(uid)
         if self.ids == []:
-            with codecs.open(DATA_FOLDER + "uidsUsed.txt", "w", "utf-8") as f:
+            with codecs.open(USEDUIDS_FILE, "w", "utf-8") as f:
                 f.write(u"")
             self.ids = current_ids
             self.idsUsed = []
 
-    def update_used_uids(self):
-        self.idsUsed.append(self.current_id)
-        with codecs.open(DATA_FOLDER + "uidsUsed.txt", "w", "utf-8") as f:
+    def remove_user_from_used_uids(self, userid):
+        '''userid can be a list'''
+        if not isinstance(userid, list): userid = [userid]
+        for id in userid:
+            if id in self.idsUsed:
+                self.idsUsed.remove(id)
+        self.update_used_uids(False)
+
+    def update_used_uids(self, write_current=True):
+        '''Write current user Default. Don't Write, while updating wthiput saving current'''
+        if write_current:
+            self.idsUsed.append(self.current_id)
+        with codecs.open(USEDUIDS_FILE, "w", "utf-8") as f:
             f.write(u"\r\n".join([str(x) for x in self.idsUsed]))
+
     def load_patterns(self):
-        with codecs.open(DATA_FOLDER + "patterns.txt", "r", "utf-8") as f:
+        with codecs.open(PATTERNS_FILE, "r", "utf-8") as f:
             for line in f:
                 self.sentence_patterns[line[:-2]] = 1
 
     def load_words(self):
-        with codecs.open(DATA_FOLDER + "words.txt", "r", "utf-8") as f:
+        with codecs.open(WORDS_FILE, "r", "utf-8") as f:
             for line in f:
                 line = line[:-2].split(u"\t")
                 gram, words = line[0], line[1:]
@@ -101,7 +112,7 @@ class Phrase:
     def random_pattern(self):
         with codecs.open(DATA_FOLDER + "info.txt", "r", "utf-8") as f:
             index = random.randint(0, int(f.read()))
-        with codecs.open(DATA_FOLDER + "patterns.txt", "r", "utf-8") as f:
+        with codecs.open(PATTERNS_FILE, "r", "utf-8") as f:
             count = 0
             for pattern in f:
                 if index == count: return pattern
