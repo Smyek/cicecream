@@ -1,7 +1,7 @@
 #coding:utf-8
-from generation import Phrase
+from generation import PhraseGenerator
 
-generator = Phrase()
+generator = PhraseGenerator()
 # generator.update_users()
 def generate_phrases(amount=100):
     global generator

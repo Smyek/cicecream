@@ -7,49 +7,59 @@ if hasattr(ssl, '_create_unverified_context'):
 
 import vkontakte, codecs, random, re, string
 
-token = "9ccb936cc7885c4928041db74f6235799f04e2ae673782379a6da82c80c30984f5e5b90f27702354c07f9"
-CLIENT_ID = '4894606'
-CLIENT_SECRET = 'ySiSE0LwXHrAq8zD9e0V'
-vk = vkontakte.API('4894606', 'ySiSE0LwXHrAq8zD9e0V', token)
-
 DATA_FOLDER = "data/"
 USEDUIDS_FILE = DATA_FOLDER + "uidsUsed.txt"
 WORDS_FILE = DATA_FOLDER + "words.txt"
 PATTERNS_FILE = DATA_FOLDER + "patterns.txt"
 
-def post_message(message_text, test_message=False):
-    group_id = "-92940311"
-    if test_message:
-        group_id = "-125307022"
-    vk.get(method="wall.post", message=message_text, owner_id=group_id) ## это чтоб постить от смороженного
+class VKManager:
+    def __init__(self):
+        self._API_DATA = {}
+        self.load_api_data()
+        self._TOKEN = self._API_DATA["token"]
+        self._CLIENT_ID = self._API_DATA["client_id"]
+        self._CLIENT_SECRET = self._API_DATA["client_secret"]
 
-#offset - random
-def get_ids():
-    randOffset = 0
-    members_count = vk.get(method="groups.getById", group_id="92940311", fields=u"members_count")[0][u"members_count"]
-    if members_count > 1000:
-        k = int(str(members_count)[0])
-        randOffset = random.randint(0,k)
-    return vk.get(method="groups.getMembers", group_id="92940311", offset=randOffset)['users']
+        self.vk = vkontakte.API(self._CLIENT_ID, self._CLIENT_SECRET, self._TOKEN)
 
-def get_random_id():
-    ids = get_ids()
-    randomId = str(random.choice(ids))
-    return randomId
+    def load_api_data(self):
+        with codecs.open(DATA_FOLDER + "apidata.csv", "r", "utf-8") as f:
+            data_rows = f.read().split("\r\n")
+            for row in data_rows:
+                key, value = row.split(";")
+                self._API_DATA[key] = value
 
-def make_username(UID, NAME):
-    pattern = u"@id%s (%s)" % (UID, NAME)
-    return pattern
+    def post_message(self, message_text, test_message=False):
+        group_id = "-92940311"
+        if test_message:
+            group_id = "-125307022"
+        self.vk.get(method="wall.post", message=message_text, owner_id=group_id) ## это чтоб постить от смороженного
 
-def get_name(id, case='nom'):
-    user = vk.get(method="users.get", user_ids=id, name_case=case, fields=u'first_name, last_name, sex')[0]
-    name = u"%s %s" % (user[u"first_name"], user[u"last_name"])
-    sexDict = {1: u"f", 2: u"m", 0: u"m", 3: u"m"}
-    sex = sexDict[user[u"sex"]]
-    return name, sex
+    #offset - random
+    def get_ids(self):
+        randOffset = 0
+        members_count = self.vk.get(method="groups.getById", group_id="92940311", fields=u"members_count")[0][u"members_count"]
+        if members_count > 1000:
+            k = int(str(members_count)[0])
+            randOffset = random.randint(0,k)
+        return self.vk.get(method="groups.getMembers", group_id="92940311", offset=randOffset)['users']
+
+    def get_random_id(self):
+        ids = self.get_ids()
+        randomId = str(random.choice(ids))
+        return randomId
 
 
-class Phrase:
+    def get_name(self, id, case='nom'):
+        user = self.vk.get(method="users.get", user_ids=id, name_case=case, fields=u'first_name, last_name, sex')[0]
+        name = u"%s %s" % (user[u"first_name"], user[u"last_name"])
+        sexDict = {1: u"f", 2: u"m", 0: u"m", 3: u"m"}
+        sex = sexDict[user[u"sex"]]
+        return name, sex
+
+
+
+class PhraseGenerator:
     def __init__(self):
         self.ids = []
         self.idsUsed = []
@@ -59,6 +69,8 @@ class Phrase:
 
         self.current_id = None
         self.current_username = None
+
+        self.vk = VKManager()
 
     def load_ids_fname(self, fname):
         with codecs.open(fname, "r", "utf-8") as f:
@@ -71,7 +83,7 @@ class Phrase:
 
     def update_users(self):
         self.load_ids_fname(USEDUIDS_FILE)
-        current_ids = get_ids()
+        current_ids = self.vk.get_ids()
         for uid in current_ids:
             uid = str(uid)
             if uid not in self.idsUsed:
@@ -121,8 +133,12 @@ class Phrase:
     def upper_repl(self, match):
          return match.group(1) + u" " + match.group(2).upper()
 
+    def make_username(self, UID, NAME):
+        pattern = u"@id%s (%s)" % (UID, NAME)
+        return pattern
+
     def user_link(self, match):
-        return make_username(match.group(1), self.current_username)
+        return self.make_username(match.group(1), self.current_username)
 
     def phrase_refine(self, phrase):
         phrase = u" ".join(phrase)# + "."
@@ -166,7 +182,7 @@ class Phrase:
             if u"<username>" in gram:
                 if username is None:
                     self.current_id = random.choice(self.ids)
-                    username, sex = get_name(self.current_id, "nom")
+                    username, sex = self.vk.get_name(self.current_id, "nom")
                 if u",%s," % sex not in gram: return self.generate_phrase_cheap(username, sex)
                 phrase.append(u"id" + str(self.current_id)) #make_username(self.current_id, username)
                 self.current_username = username
@@ -181,7 +197,7 @@ class Phrase:
         return phrase
 
 if __name__ == "__main__":
-    generator = Phrase()
+    generator = PhraseGenerator()
     generator.update_users()
     phrase = generator.generate_phrase_cheap()
-    post_message(phrase, True)
+    generator.vk.post_message(phrase, True)
