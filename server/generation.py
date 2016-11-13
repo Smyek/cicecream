@@ -35,19 +35,12 @@ class VKManager:
             group_id = "-125307022"
         self.vk.get(method="wall.post", message=message_text, owner_id=group_id) ## это чтоб постить от смороженного
 
-    #offset - random
-    def get_ids(self):
-        randOffset = 0
-        members_count = self.vk.get(method="groups.getById", group_id="92940311", fields=u"members_count")[0][u"members_count"]
-        if members_count > 1000:
-            k = int(str(members_count)[0])
-            randOffset = random.randint(0,k)
-        return self.vk.get(method="groups.getMembers", group_id="92940311", offset=randOffset)['users']
-
-    def get_random_id(self):
-        ids = self.get_ids()
-        randomId = str(random.choice(ids))
-        return randomId
+    def get_ids(self, group_id="92940311"):
+        uids = []
+        members_count = self.vk.get(method="groups.getById", group_id=group_id, fields=u"members_count")[0][u"members_count"]
+        for offset in range(0, members_count, 1000):
+            uids += self.vk.get(method="groups.getMembers", group_id=group_id, offset=offset)['users']
+        return uids
 
 
     def get_name(self, id, case='nom'):
@@ -103,7 +96,7 @@ class PhraseGenerator:
         self.update_used_uids(False)
 
     def update_used_uids(self, write_current=True):
-        '''Write current user Default. Don't Write, while updating wthiput saving current'''
+        '''Write current user Default. Don't Write, while updating without saving current'''
         if write_current:
             self.idsUsed.append(self.current_id)
         with codecs.open(USEDUIDS_FILE, "w", "utf-8") as f:
