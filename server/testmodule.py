@@ -2,6 +2,7 @@
 from generation import PhraseGenerator
 
 generator = PhraseGenerator()
+generator.vk._TEST_MODE = True
 # generator.update_users()
 def generate_phrases(amount=100):
     global generator

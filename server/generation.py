@@ -22,6 +22,8 @@ class VKManager:
 
         self.vk = vkontakte.API(self._CLIENT_ID, self._CLIENT_SECRET, self._TOKEN)
 
+        self._TEST_MODE = True
+
     def load_api_data(self):
         with codecs.open(DATA_FOLDER + "apidata.csv", "r", "utf-8") as f:
             data_rows = f.read().split("\r\n")
@@ -29,9 +31,17 @@ class VKManager:
                 key, value = row.split(";")
                 self._API_DATA[key] = value
 
-    def post_message(self, message_text, test_message=False):
+    def load_config(self):
+        with codecs.open(DATA_FOLDER + "config.csv", "r", "utf-8") as f:
+            data_rows = f.read().split("\r\n")
+            for row in data_rows:
+                key, value = row.split(";")
+                if key == "test_mode":
+                    self._TEST_MODE = "True" == value
+
+    def post_message(self, message_text):
         group_id = "-92940311"
-        if test_message:
+        if self._TEST_MODE:
             group_id = "-125307022"
         self.vk.get(method="wall.post", message=message_text, owner_id=group_id) ## это чтоб постить от смороженного
 
@@ -41,7 +51,6 @@ class VKManager:
         for offset in range(0, members_count, 1000):
             uids += self.vk.get(method="groups.getMembers", group_id=group_id, offset=offset)['users']
         return uids
-
 
     def get_name(self, id, case='nom'):
         user = self.vk.get(method="users.get", user_ids=id, name_case=case, fields=u'first_name, last_name, sex')[0]
@@ -193,4 +202,4 @@ if __name__ == "__main__":
     generator = PhraseGenerator()
     generator.update_users()
     phrase = generator.generate_phrase_cheap()
-    generator.vk.post_message(phrase, True)
+    generator.vk.post_message(phrase)

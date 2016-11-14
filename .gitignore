@@ -1,3 +1,4 @@
 server/*.pyc
 server/data/apidata.csv
 server/data/uidsUsed.txt
+backup/
