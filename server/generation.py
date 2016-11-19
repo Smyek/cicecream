@@ -39,11 +39,12 @@ class VKManager:
                 if key == "test_mode":
                     self._TEST_MODE = "True" == value
 
+    # post vk via smorozhenoe group
     def post_message(self, message_text):
         group_id = "-92940311"
         if self._TEST_MODE:
             group_id = "-125307022"
-        self.vk.get(method="wall.post", message=message_text, owner_id=group_id) ## это чтоб постить от смороженного
+        self.vk.get(method="wall.post", message=message_text, owner_id=group_id)
 
     def get_ids(self, group_id="92940311"):
         uids = []
@@ -73,6 +74,8 @@ class PhraseGenerator:
         self.current_username = None
 
         self.vk = VKManager()
+
+        self.load_words()
 
     def load_ids_fname(self, fname):
         with codecs.open(fname, "r", "utf-8") as f:
@@ -177,7 +180,6 @@ class PhraseGenerator:
         return word
 
     def generate_phrase_cheap(self, username=None, sex=None):
-        self.load_words()
         phrase = []
         pattern = self.random_pattern()[:-2].split(u"_+_")
         for gram in pattern:

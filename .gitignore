@@ -2,3 +2,5 @@ server/*.pyc
 server/data/apidata.csv
 server/data/uidsUsed.txt
 backup/
+preprocess/.idea/
+preprocess/data/corpus/
