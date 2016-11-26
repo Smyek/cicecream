@@ -1,0 +1,8 @@
+Remover:
+  1: {regex: '<.+?>', Description: 'Delete tags'}
+Replacer:
+  1: {regex: '--', r_value: '—'}
+Custom:
+  spaces_remove: {regex: '\s+', r_value: '—', Description: 'Delete unnecessary spaces'}
+Search:
+  not_rus: {regex: '--'}

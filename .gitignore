@@ -4,3 +4,9 @@ server/data/uidsUsed.txt
 backup/
 preprocess/.idea/
 preprocess/data/corpus/
+preprocess/data/corpusBACKUP
+preprocess/__pycache__/
+preprocess/data/exceptions.txt
+preprocess/data/mystem.exe
+preprocess/data/mystem_output/
+preprocess/logs
