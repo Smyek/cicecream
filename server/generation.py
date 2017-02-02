@@ -83,25 +83,32 @@ class UserManager:
 
     def load_used_uids(self):
         with codecs.open(USEDUIDS_FILE, "r", "utf-8") as f:
-            return map(int, f.read().split("\r\n"))
+            return map(int, f.read().replace("\r\n","\n").split("\n"))
 
     def load_ever_used_uids(self):
         with codecs.open(EVERUSEDUIDS_FILE, "r", "utf-8") as f:
-            dictionary = defaultdict(int, [map(int, row.split("\t")) for row in f.read().split("\r\n")])
+            dictionary = defaultdict(int, [map(int, row.split("\t")) for row in f.read().replace("\r\n","\n").split("\n")])
             return dictionary, dictionary.keys()
 
     def add_to_used(self, id):
+        id = int(id)
         self.used_uids.append(id)
+        print "self.ever_used_uids_with_frequency[id] before update", self.ever_used_uids_with_frequency[id]
         self.ever_used_uids_with_frequency[id] += 1
+        print "self.ever_used_uids_with_frequency[id] after", self.ever_used_uids_with_frequency[id]
 
     def update_uids_files(self):
         with codecs.open(USEDUIDS_FILE, "w", "utf-8") as f:
-            f.write("\n".join(self.used_uids))
+            f.write("\n".join(map(str, self.used_uids)))
 
         with codecs.open(EVERUSEDUIDS_FILE, "w", "utf-8") as f:
-            uids_with_freq = sorted(self.ever_used_uids_with_frequency.items(), key=lambda t: t[1], reverse=True)
-            uids_with_freq = ["\t".join(i) for i in uids_with_freq]
+            uids_with_freq = sorted(self.ever_used_uids_with_frequency.items(), key=lambda t: (t[1], t[0]), reverse=True)
+            uids_with_freq = ["\t".join(map(str, i)) for i in uids_with_freq]
             f.write("\n".join(uids_with_freq))
+
+    def add_and_update_uids(self, id):
+        self.add_to_used(id)
+        self.update_uids_files()
 
     def find_never_used(self):
         return list(set(self.group_uids) - set(self.used_uids))

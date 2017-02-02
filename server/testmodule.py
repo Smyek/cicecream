@@ -1,6 +1,8 @@
 #coding:utf-8
 import random, datetime, codecs
 
+TEST_UID = "4894606"
+
 def generate_phrases(amount=100):
     global generator
     for i in range(amount):
@@ -38,15 +40,16 @@ class ServerErrorLogger:
 
 
 
-
-
 if __name__ == "__main__":
     from generation import PhraseGenerator
     # generator.update_users()
     generator = PhraseGenerator()
     generator.vk._TEST_MODE = True
     print generator.user_manager.ever_used_uids
+    print generator.user_manager.ever_used_uids_with_frequency
     print generator.user_manager.group_uids
     print ""
     print set(generator.user_manager.group_uids) - set(generator.user_manager.ever_used_uids)
+    print "update test"
+    generator.user_manager.add_and_update_uids(TEST_UID)
 
