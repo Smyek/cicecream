@@ -6,9 +6,12 @@ if hasattr(ssl, '_create_unverified_context'):
     ssl._create_default_https_context = ssl._create_unverified_context
 
 import vkontakte, codecs, random, re, string
+from collections import defaultdict
+import testmodule
 
 DATA_FOLDER = "data/"
 USEDUIDS_FILE = DATA_FOLDER + "uidsUsed.txt"
+EVERUSEDUIDS_FILE = DATA_FOLDER + "uids_ever_used.csv"
 WORDS_FILE = DATA_FOLDER + "words.txt"
 PATTERNS_FILE = DATA_FOLDER + "patterns.txt"
 
@@ -23,6 +26,7 @@ class VKManager:
         self.vk = vkontakte.API(self._CLIENT_ID, self._CLIENT_SECRET, self._TOKEN)
 
         self._TEST_MODE = True
+        self.load_config()
 
     def load_api_data(self):
         with codecs.open(DATA_FOLDER + "apidata.csv", "r", "utf-8") as f:
@@ -60,6 +64,60 @@ class VKManager:
         sex = sexDict[user[u"sex"]]
         return name, sex
 
+class UserManager:
+    def __init__(self, vkm):
+        self.vk = vkm
+
+        #load
+        self.used_uids = self.load_used_uids()
+        self.ever_used_uids_with_frequency,\
+        self.ever_used_uids = self.load_ever_used_uids()
+        self.group_uids = self.vk.get_ids()
+
+        #selections
+        self.never_used = self.find_never_used()
+        self.not_used_on_cycle = self.find_not_used_on_cycle()
+
+        #choose
+        self.result_selection = self.choose_selection()
+
+    def load_used_uids(self):
+        with codecs.open(USEDUIDS_FILE, "r", "utf-8") as f:
+            return map(int, f.read().split("\r\n"))
+
+    def load_ever_used_uids(self):
+        with codecs.open(EVERUSEDUIDS_FILE, "r", "utf-8") as f:
+            dictionary = defaultdict(int, [map(int, row.split("\t")) for row in f.read().split("\r\n")])
+            return dictionary, dictionary.keys()
+
+    def add_to_used(self, id):
+        self.used_uids.append(id)
+        self.ever_used_uids_with_frequency[id] += 1
+
+    def update_uids_files(self):
+        with codecs.open(USEDUIDS_FILE, "w", "utf-8") as f:
+            f.write("\n".join(self.used_uids))
+
+        with codecs.open(EVERUSEDUIDS_FILE, "w", "utf-8") as f:
+            uids_with_freq = sorted(self.ever_used_uids_with_frequency.items(), key=lambda t: t[1], reverse=True)
+            uids_with_freq = ["\t".join(i) for i in uids_with_freq]
+            f.write("\n".join(uids_with_freq))
+
+    def find_never_used(self):
+        return list(set(self.group_uids) - set(self.used_uids))
+
+    def find_not_used_on_cycle(self):
+        return list(set(self.group_uids) - set(self.ever_used_uids))
+
+    def choose_selection(self):
+        for selection_id, selection in [("never_used", self.never_used),
+                                        ("not_used_on_cycle", self.not_used_on_cycle),
+                                        ("group_uids", self.group_uids)]:
+            if selection:
+                #clear not_used_on_cycle because all users were used on this cycle
+                if selection_id == "group_uids":
+                    self.not_used_on_cycle = []
+                return selection
 
 
 class PhraseGenerator:
@@ -74,6 +132,7 @@ class PhraseGenerator:
         self.current_username = None
 
         self.vk = VKManager()
+        self.user_manager = UserManager(self.vk)
 
         self.load_words()
 
@@ -200,8 +259,22 @@ class PhraseGenerator:
         self.update_used_uids()
         return phrase
 
-if __name__ == "__main__":
+def run_generation_job():
     generator = PhraseGenerator()
     generator.update_users()
     phrase = generator.generate_phrase_cheap()
     generator.vk.post_message(phrase)
+    return phrase
+
+if __name__ == "__main__":
+    SEL = testmodule.ServerErrorLogger()
+    success = False
+    while not success:
+        try:
+            phrase = run_generation_job()
+            SEL.add_log(phrase)
+            success = True
+        except ValueError as err:
+            SEL.add_log(str(err))
+
+    SEL.save_logs()
