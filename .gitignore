@@ -10,3 +10,6 @@ preprocess/data/exceptions.txt
 preprocess/data/mystem.exe
 preprocess/data/mystem_output/
 preprocess/logs
+backups/
+preprocess/data/refined_texts/
+server/service/server_logs.txt

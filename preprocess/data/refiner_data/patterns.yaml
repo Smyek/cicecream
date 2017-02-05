@@ -3,6 +3,6 @@ Remover:
 Replacer:
   1: {regex: '--', r_value: '—'}
 Custom:
-  spaces_remove: {regex: '\s+', r_value: '—', Description: 'Delete unnecessary spaces'}
+  spaces_remove: {regex: '\s+', r_value: ' ', Description: 'Delete unnecessary spaces'}
 Search:
-  not_rus: {regex: '--'}
+  not_allowed_chars: {regex: '[^А-ЯаяЁё ,.?!:]'}

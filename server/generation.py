@@ -10,8 +10,9 @@ from collections import defaultdict
 import testmodule
 
 DATA_FOLDER = "data/"
-USEDUIDS_FILE = DATA_FOLDER + "uidsUsed.txt"
-EVERUSEDUIDS_FILE = DATA_FOLDER + "uids_ever_used.csv"
+USERDATA_FOLDER = DATA_FOLDER + "userdata/"
+USEDUIDS_FILE = USERDATA_FOLDER + "uidsUsed.txt"
+EVERUSEDUIDS_FILE = USERDATA_FOLDER + "uids_ever_used.csv"
 WORDS_FILE = DATA_FOLDER + "words.txt"
 PATTERNS_FILE = DATA_FOLDER + "patterns.txt"
 
@@ -123,14 +124,15 @@ class UserManager:
             if selection:
                 #clear not_used_on_cycle because all users were used on this cycle
                 if selection_id == "group_uids":
-                    self.not_used_on_cycle = []
+                    self.used_uids = []
                 return selection
+
+    def choose_random_uid(self):
+        return random.choice(self.result_selection)
 
 
 class PhraseGenerator:
     def __init__(self):
-        self.ids = []
-        self.idsUsed = []
         self.sentence_patterns = {}
         self.gram = {}
         self.reGram = re.compile(u"(,|=)")
@@ -142,43 +144,6 @@ class PhraseGenerator:
         self.user_manager = UserManager(self.vk)
 
         self.load_words()
-
-    def load_ids_fname(self, fname):
-        with codecs.open(fname, "r", "utf-8") as f:
-            uids = f.read().split("\r\n")
-        for uid in uids:
-            if fname == DATA_FOLDER + "uidsNew.txt":
-                if uid != u"": self.ids.append(uid)
-            elif fname == USEDUIDS_FILE:
-                if uid != u"": self.idsUsed.append(uid)
-
-    def update_users(self):
-        self.load_ids_fname(USEDUIDS_FILE)
-        current_ids = self.vk.get_ids()
-        for uid in current_ids:
-            uid = str(uid)
-            if uid not in self.idsUsed:
-                self.ids.append(uid)
-        if self.ids == []:
-            with codecs.open(USEDUIDS_FILE, "w", "utf-8") as f:
-                f.write(u"")
-            self.ids = current_ids
-            self.idsUsed = []
-
-    def remove_user_from_used_uids(self, userid):
-        '''userid can be a list'''
-        if not isinstance(userid, list): userid = [userid]
-        for id in userid:
-            if id in self.idsUsed:
-                self.idsUsed.remove(id)
-        self.update_used_uids(False)
-
-    def update_used_uids(self, write_current=True):
-        '''Write current user Default. Don't Write, while updating without saving current'''
-        if write_current:
-            self.idsUsed.append(self.current_id)
-        with codecs.open(USEDUIDS_FILE, "w", "utf-8") as f:
-            f.write(u"\r\n".join([str(x) for x in self.idsUsed]))
 
     def load_patterns(self):
         with codecs.open(PATTERNS_FILE, "r", "utf-8") as f:
@@ -251,7 +216,7 @@ class PhraseGenerator:
         for gram in pattern:
             if u"<username>" in gram:
                 if username is None:
-                    self.current_id = random.choice(self.ids)
+                    self.current_id = self.user_manager.choose_random_uid()
                     username, sex = self.vk.get_name(self.current_id, "nom")
                 if u",%s," % sex not in gram: return self.generate_phrase_cheap(username, sex)
                 phrase.append(u"id" + str(self.current_id)) #make_username(self.current_id, username)
@@ -263,13 +228,13 @@ class PhraseGenerator:
         phrase = self.phrase_refine(phrase)
         if (len(phrase) > 260) or (len(phrase.split()) < 8):
             return self.generate_phrase_cheap(username, sex)
-        self.update_used_uids()
+        self.user_manager.add_to_used(self.current_id)
         return phrase
 
 def run_generation_job():
     generator = PhraseGenerator()
-    generator.update_users()
     phrase = generator.generate_phrase_cheap()
+    generator.user_manager.update_uids_files()
     generator.vk.post_message(phrase)
     return phrase
 

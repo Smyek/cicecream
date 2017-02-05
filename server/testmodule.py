@@ -1,5 +1,5 @@
 #coding:utf-8
-import random, datetime, codecs
+import random, datetime, codecs, time
 
 TEST_UID = "4894606"
 
@@ -9,6 +9,34 @@ def generate_phrases(amount=100):
         print i+1,
         phrase = generator.generate_phrase_cheap(username="Игорь Шепард", sex="m")
         print phrase
+
+def check_posting_service():
+    generator = PhraseGenerator()
+    generator.vk._TEST_MODE = True
+    generator.user_manager.group_uids = [1, 2, 3]
+    generator.user_manager.never_used = []
+    generator.user_manager.not_used_on_cycle = [3]
+    generator.user_manager.result_selection = generator.user_manager.choose_selection()
+    phrase = generator.generate_phrase_cheap()
+    print phrase
+    generator.user_manager.update_uids_files()
+    generator.vk.post_message(phrase)
+
+def test_1():
+    global generator
+    print generator.user_manager.ever_used_uids
+    print generator.user_manager.ever_used_uids_with_frequency
+    print generator.user_manager.group_uids
+    print ""
+    print set(generator.user_manager.group_uids) - set(generator.user_manager.ever_used_uids)
+    print "update test"
+    generator.user_manager.add_and_update_uids(TEST_UID)
+
+def simple_test():
+    global generator
+    phrase = generator.generate_phrase_cheap()
+    generator.user_manager.update_uids_files()
+    generator.vk.post_message(phrase)
 
 class ServerErrorLogger:
     def __init__(self):
@@ -41,15 +69,10 @@ class ServerErrorLogger:
 
 
 if __name__ == "__main__":
-    from generation import PhraseGenerator
+    from generation import PhraseGenerator, run_generation_job
     # generator.update_users()
     generator = PhraseGenerator()
     generator.vk._TEST_MODE = True
-    print generator.user_manager.ever_used_uids
-    print generator.user_manager.ever_used_uids_with_frequency
-    print generator.user_manager.group_uids
-    print ""
-    print set(generator.user_manager.group_uids) - set(generator.user_manager.ever_used_uids)
-    print "update test"
-    generator.user_manager.add_and_update_uids(TEST_UID)
+    simple_test()
+
 
