@@ -7,7 +7,8 @@ if hasattr(ssl, '_create_unverified_context'):
 
 import vkontakte, codecs, random, re, string
 from collections import defaultdict
-import testmodule
+
+from utils import server_log
 
 DATA_FOLDER = "data/"
 USERDATA_FOLDER = DATA_FOLDER + "userdata/"
@@ -92,11 +93,10 @@ class UserManager:
             return dictionary, dictionary.keys()
 
     def add_to_used(self, id):
+        server_log.add_log("adding to used: %s" % id)
         id = int(id)
         self.used_uids.append(id)
-        print "self.ever_used_uids_with_frequency[id] before update", self.ever_used_uids_with_frequency[id]
         self.ever_used_uids_with_frequency[id] += 1
-        print "self.ever_used_uids_with_frequency[id] after", self.ever_used_uids_with_frequency[id]
 
     def update_uids_files(self):
         with codecs.open(USEDUIDS_FILE, "w", "utf-8") as f:
@@ -239,14 +239,13 @@ def run_generation_job():
     return phrase
 
 if __name__ == "__main__":
-    SEL = testmodule.ServerErrorLogger()
     success = False
     while not success:
         try:
             phrase = run_generation_job()
-            SEL.add_log(phrase)
+            server_log.add_log(phrase)
             success = True
         except ValueError as err:
-            SEL.add_log(str(err))
+            server_log.add_log(str(err))
 
-    SEL.save_logs()
+    server_log.save_logs()
