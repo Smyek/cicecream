@@ -5,10 +5,11 @@ import ssl
 if hasattr(ssl, '_create_unverified_context'):
     ssl._create_default_https_context = ssl._create_unverified_context
 
+from utils import server_log
+
 import vkontakte, codecs, random, re, string
 from collections import defaultdict
 
-from utils import server_log
 
 DATA_FOLDER = "data/"
 USERDATA_FOLDER = DATA_FOLDER + "userdata/"
@@ -83,6 +84,9 @@ class UserManager:
         #choose
         self.result_selection = self.choose_selection()
 
+        #log
+        self.log()
+
     def load_used_uids(self):
         with codecs.open(USEDUIDS_FILE, "r", "utf-8") as f:
             return map(int, f.read().replace("\r\n","\n").split("\n"))
@@ -93,7 +97,7 @@ class UserManager:
             return dictionary, dictionary.keys()
 
     def add_to_used(self, id):
-        server_log.add_log("adding to used: %s" % id)
+        server_log.add_key_value_log("adding to used", id)
         id = int(id)
         self.used_uids.append(id)
         self.ever_used_uids_with_frequency[id] += 1
@@ -122,13 +126,23 @@ class UserManager:
                                         ("not_used_on_cycle", self.not_used_on_cycle),
                                         ("group_uids", self.group_uids)]:
             if selection:
+                server_log.add_key_value_log("chosen selection", selection_id)
+
                 #clear not_used_on_cycle because all users were used on this cycle
                 if selection_id == "group_uids":
                     self.used_uids = []
                 return selection
 
     def choose_random_uid(self):
-        return random.choice(self.result_selection)
+        uid = random.choice(self.result_selection)
+        server_log.add_key_value_log("chosen uid", "%s (https://vk.com/id%s)" % (uid,uid))
+        return uid
+
+    def log(self):
+        for selection_id, selection in [("never_used", self.never_used),
+                                        ("not_used_on_cycle", self.not_used_on_cycle),
+                                        ("group_uids", self.group_uids)]:
+            server_log.add_key_value_log(selection_id, "%s uids" % len(selection))
 
 
 class PhraseGenerator:
@@ -160,6 +174,7 @@ class PhraseGenerator:
     def random_pattern(self):
         with codecs.open(DATA_FOLDER + "info.txt", "r", "utf-8") as f:
             index = random.randint(0, int(f.read()))
+            server_log.add_key_value_log("pattern", index+1)
         with codecs.open(PATTERNS_FILE, "r", "utf-8") as f:
             count = 0
             for pattern in f:
