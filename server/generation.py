@@ -7,7 +7,7 @@ if hasattr(ssl, '_create_unverified_context'):
 
 from utils import server_log
 
-import vkontakte, codecs, random, re, string
+import vk, codecs, random, re, string
 from collections import defaultdict
 
 
@@ -25,21 +25,23 @@ class VKManager:
         self._TOKEN = self._API_DATA["token"]
         self._CLIENT_ID = self._API_DATA["client_id"]
         self._CLIENT_SECRET = self._API_DATA["client_secret"]
-
-        self.vk = vkontakte.API(self._CLIENT_ID, self._CLIENT_SECRET, self._TOKEN)
+        #TOREFACTOR
+        #self.vk = vk.API(self._CLIENT_ID, self._CLIENT_SECRET, self._TOKEN)
+        self.session = vk.Session(access_token=self._TOKEN)
+        self.vk = vk.API(self.session)
 
         self._TEST_MODE = True
         self.load_config()
 
     def load_api_data(self):
-        with codecs.open(DATA_FOLDER + "apidata.csv", "r", "utf-8") as f:
-            data_rows = f.read().split("\r\n")
+        with open(DATA_FOLDER + "apidata.csv", "r", encoding="utf-8") as f:
+            data_rows = f.read().split("\n")
             for row in data_rows:
                 key, value = row.split(";")
                 self._API_DATA[key] = value
 
     def load_config(self):
-        with codecs.open(DATA_FOLDER + "config.csv", "r", "utf-8") as f:
+        with open(DATA_FOLDER + "config.csv", "r", encoding="utf-8") as f:
             data_rows = f.read().split("\r\n")
             for row in data_rows:
                 key, value = row.split(";")
@@ -88,12 +90,14 @@ class UserManager:
         self.log()
 
     def load_used_uids(self):
-        with codecs.open(USEDUIDS_FILE, "r", "utf-8") as f:
-            return map(int, f.read().replace("\r\n","\n").split("\n"))
+        with open(USEDUIDS_FILE, "r", encoding="utf-8") as f:
+            content = f.read().split("\n")
+            if content == ['']: return []
+            return list(map(int, content))
 
     def load_ever_used_uids(self):
-        with codecs.open(EVERUSEDUIDS_FILE, "r", "utf-8") as f:
-            dictionary = defaultdict(int, [map(int, row.split("\t")) for row in f.read().replace("\r\n","\n").split("\n")])
+        with open(EVERUSEDUIDS_FILE, "r", encoding="utf-8") as f:
+            dictionary = defaultdict(int, [list(map(int, row.split("\t"))) for row in f.read().replace("\r\n","\n").split("\n")])
             return dictionary, dictionary.keys()
 
     def add_to_used(self, id):
@@ -103,10 +107,10 @@ class UserManager:
         self.ever_used_uids_with_frequency[id] += 1
 
     def update_uids_files(self):
-        with codecs.open(USEDUIDS_FILE, "w", "utf-8") as f:
-            f.write("\n".join(map(str, self.used_uids)))
+        with open(USEDUIDS_FILE, "w", encoding="utf-8") as f:
+            f.write("\n".join(list(map(str, self.used_uids))))
 
-        with codecs.open(EVERUSEDUIDS_FILE, "w", "utf-8") as f:
+        with open(EVERUSEDUIDS_FILE, "w", encoding="utf-8") as f:
             uids_with_freq = sorted(self.ever_used_uids_with_frequency.items(), key=lambda t: (t[1], t[0]), reverse=True)
             uids_with_freq = ["\t".join(map(str, i)) for i in uids_with_freq]
             f.write("\n".join(uids_with_freq))
@@ -160,22 +164,22 @@ class PhraseGenerator:
         self.load_words()
 
     def load_patterns(self):
-        with codecs.open(PATTERNS_FILE, "r", "utf-8") as f:
+        with open(PATTERNS_FILE, "r", encoding="utf-8") as f:
             for line in f:
                 self.sentence_patterns[line[:-2]] = 1
 
     def load_words(self):
-        with codecs.open(WORDS_FILE, "r", "utf-8") as f:
+        with open(WORDS_FILE, "r", encoding="utf-8") as f:
             for line in f:
-                line = line[:-2].split(u"\t")
+                line = line.strip().split(u"\t")
                 gram, words = line[0], line[1:]
                 self.gram[gram] = words
 
     def random_pattern(self):
-        with codecs.open(DATA_FOLDER + "info.txt", "r", "utf-8") as f:
+        with open(DATA_FOLDER + "info.txt", "r", encoding="utf-8") as f:
             index = random.randint(0, int(f.read()))
             server_log.add_key_value_log("pattern", index+1)
-        with codecs.open(PATTERNS_FILE, "r", "utf-8") as f:
+        with open(PATTERNS_FILE, "r", encoding="utf-8") as f:
             count = 0
             for pattern in f:
                 if index == count: return pattern
@@ -227,7 +231,7 @@ class PhraseGenerator:
 
     def generate_phrase_cheap(self, username=None, sex=None):
         phrase = []
-        pattern = self.random_pattern()[:-2].split(u"_+_")
+        pattern = self.random_pattern().strip().split(u"_+_")
         for gram in pattern:
             if u"<username>" in gram:
                 if username is None:

@@ -5,9 +5,9 @@ TEST_UID = "4894606"
 def generate_phrases(amount=100):
     global generator
     for i in range(amount):
-        print i+1,
+        print(i+1)
         phrase = generator.generate_phrase_cheap(username="Игорь Шепард", sex="m")
-        print phrase
+        print(phrase)
 
 def check_posting_service():
     generator = PhraseGenerator()
@@ -17,19 +17,10 @@ def check_posting_service():
     generator.user_manager.not_used_on_cycle = [3]
     generator.user_manager.result_selection = generator.user_manager.choose_selection()
     phrase = generator.generate_phrase_cheap()
-    print phrase
+    print(phrase)
     generator.user_manager.update_uids_files()
     generator.vk.post_message(phrase)
 
-def test_1():
-    global generator
-    print generator.user_manager.ever_used_uids
-    print generator.user_manager.ever_used_uids_with_frequency
-    print generator.user_manager.group_uids
-    print ""
-    print set(generator.user_manager.group_uids) - set(generator.user_manager.ever_used_uids)
-    print "update test"
-    generator.user_manager.add_and_update_uids(TEST_UID)
 
 def simple_test():
     global generator
