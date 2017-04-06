@@ -51,3 +51,4 @@ class TxtRefiner:
 
 if __name__ == "__main__":
     txtref = TxtRefiner()
+    txtref.log.close_filestream()

@@ -1,7 +1,10 @@
 from corpusmanager import CorpusManager
 from text_refiner import TxtRefiner
+from logger import Log
 import subprocess, json, operator, random, shutil, re, os
+from pprint import pformat
 from collections import Counter, defaultdict
+
 class DataManager:
     def __init__(self, process_all_corpus=False, mystem_all=False, refine_all=False):
         #params
@@ -23,10 +26,12 @@ class DataManager:
         self.exceptions = []
 
         #init
+        self.log = Log("generator")
         self.corpus = CorpusManager()
         self.refiner = TxtRefiner()
         self.load_exceptions()
         self.prepare_documents()
+        self.log.close_filestream()
 
     def load_exceptions(self):
         with open(self.exceptions_path, "r", encoding="utf-8") as f:
@@ -39,10 +44,10 @@ class DataManager:
         if os.path.isfile(output_path) and not self.mystem_all: return
         command = u"%s -c -s -d --eng-gr --format json < %s > %s" % (self.mystem_path, input_path, output_path)
         print(command)
+        self.log.write(command)
         command = command.split()
-        #proc = subprocess.call(command, shell=True)
-        subprocess.Popen(command).wait()
-        #print(proc)
+        proc = subprocess.call(command, shell=True)
+        self.log.write(pformat(proc))
 
     def refine_text(self, document):
         output_path = self.refined_text_path % document.name
@@ -62,11 +67,11 @@ class DataManager:
 class PatternGenerator:
     def __init__(self):
         process_all_corpus = False
-        mystem_all = True
+        mystem_all = False
         refine_all = True
         self.dm = DataManager(process_all_corpus, mystem_all, refine_all)
 
-        self.mystem = [[]]
+        self.sentences =[]
         self.gram = {}
    #true, if a word is an exception
     def word_exceptions(self, lex, gram):
@@ -108,14 +113,25 @@ class PatternGenerator:
                 self.gram_process(entry["text"].strip(), entry["text"].strip())
                 self.mystem[-1].append(entry['text'].strip())
 
+    def split_msjson_on_sentences(self, mystem_json):
+        sentence = []
+        for entry in mystem_json:
+            if entry['text'] == '\\s':
+                self.sentences.append(sentence)
+                sentence = []
+            else:
+                sentence.append(entry)
+
+    def walk_sentences(self):
+        for key in self.sentences:
+            print(key)
+            self.process_mystem_entry(key)
+
     def count_mystem_grams(self, mystem_path):
         with open(mystem_path, "r", encoding="utf-8") as f:
             mystem_content = f.read().strip()
-            mystem_json = json.loads(mystem_content)
-            print(mystem_json)
-            for key in mystem_json:
-                print(key)
-                self.process_mystem_entry(key)
+            self.split_msjson_on_sentences(json.loads(mystem_content))
+        self.walk_sentences()
 
     def process_documents(self):
         for document in self.dm.corpus.iterate_documents(self.dm.process_all):
