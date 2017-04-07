@@ -13,6 +13,7 @@ class SICE_Console:
 
         self.commands = {"Print database": self.print_database,
                          "Convert old system to database": database.convert_old_system_to_database,
+                         "Generate phrase and post to Test": self.generate_phrase_and_post,
                          }
 
         self.options = ["Exit"] + sorted(self.commands.keys())
@@ -41,6 +42,14 @@ class SICE_Console:
         print(0, self.options[0])
 
     # COMMANDS
+    def generate_phrase_and_post(self):
+        from generation import PhraseGenerator
+        generator = PhraseGenerator()
+        generator.vk._TEST_MODE = True
+        phrase = generator.generate_phrase_cheap()
+        generator.vk.post_message(phrase)
+        server_log.add_log("phrase has been posted to the test group", logging.debug)
+
     def print_database(self):
         database.print_database(to_file=False, on_screen=True)
 
