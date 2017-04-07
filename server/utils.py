@@ -32,10 +32,10 @@ class ServerLogger:
         with open(self.server_logs_path, "r", encoding="utf-8") as f:
             return f.read().split("\n")
 
-    def add_log(self, message):
+    def add_log(self, message, level_function=logging.debug):
         if isinstance(message, tuple):
             message = "%s: %s" % message
-        logging.debug(message)
+        level_function(message)
 
     def add_key_value_log(self, key, value):
         self.add_log("%s: %s" % (key, value))

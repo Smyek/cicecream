@@ -1,4 +1,5 @@
 #coding:utf-8
+import time
 
 TEST_UID = "4894606"
 
@@ -28,6 +29,12 @@ def simple_test():
     generator.user_manager.update_uids_files()
     generator.vk.post_message(phrase)
 
+def generate100():
+    global generator
+    for i in range(100):
+        phrase = generator.generate_phrase_cheap()
+        time.sleep(0.3)
+        print(phrase)
 
 
 if __name__ == "__main__":
@@ -35,6 +42,6 @@ if __name__ == "__main__":
     import utils
     generator = PhraseGenerator()
     generator.vk._TEST_MODE = True
-    simple_test()
+    generate100()
 
 
