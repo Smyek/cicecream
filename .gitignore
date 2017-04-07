@@ -13,3 +13,4 @@ preprocess/logs
 backups/
 preprocess/data/refined_texts/
 server/service/server_logs.txt
+server/__pycache__/

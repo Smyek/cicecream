@@ -39,17 +39,17 @@ class GroupManager:
                 uid = id_search.group(1)
                 ids[uid] += 1
             else:
-                print "No id!", message['text'], message
+                print("No id!", message['text'], message)
 
         ids = sorted(ids.items(), key=lambda x: (x[1], x[0]), reverse=True)
         count = 0
         with codecs.open("data/userdata/uids_ever_used.csv", "w", "utf-8") as csvfile:
             writer = csv.writer(csvfile, delimiter='\t', quotechar='|', quoting=csv.QUOTE_MINIMAL)
             for entry in ids:
-                print entry
+                print(entry)
                 count += entry[1]
                 writer.writerow(entry)
-        print "messages count: ", count
+        print("messages count: ", count)
 
 if __name__ == "__main__":
     gm = GroupManager()

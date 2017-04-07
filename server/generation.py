@@ -7,7 +7,7 @@ if hasattr(ssl, '_create_unverified_context'):
 
 from utils import server_log
 
-import vk, codecs, random, re, string
+import vk, random, re, string
 from collections import defaultdict
 
 
@@ -22,12 +22,7 @@ class VKManager:
     def __init__(self):
         self._API_DATA = {}
         self.load_api_data()
-        self._TOKEN = self._API_DATA["token"]
-        self._CLIENT_ID = self._API_DATA["client_id"]
-        self._CLIENT_SECRET = self._API_DATA["client_secret"]
-        #TOREFACTOR
-        #self.vk = vk.API(self._CLIENT_ID, self._CLIENT_SECRET, self._TOKEN)
-        self.session = vk.Session(access_token=self._TOKEN)
+        self.session = vk.Session(access_token=self._API_DATA["token"])
         self.vk = vk.API(self.session)
 
         self._TEST_MODE = True
@@ -263,8 +258,7 @@ if __name__ == "__main__":
         try:
             phrase = run_generation_job()
             server_log.add_log(phrase)
+            server_log.add_time_elapsed()
             success = True
         except ValueError as err:
             server_log.add_log(str(err))
-
-    server_log.save_logs()
