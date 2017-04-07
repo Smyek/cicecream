@@ -110,12 +110,15 @@ class DatabaseManager:
             server_log.add_log(message_not_found)
             return []
 
-    def print_database_to_file(self):
+    def print_database(self, to_file=True, on_screen=False):
         self.cursor.execute('SELECT * FROM users')
         users = self.cursor.fetchall()
         with open("db_printed.txt", "w", encoding="utf-8") as f:
-            result = "\n".join(["\t".join(list(map(str, user))) for user in users])
-            f.write(result)
+            result = ["\t".join(list(map(str, user))) for user in users]
+            if to_file:
+                f.write("\n".join(result))
+            if on_screen:
+                for row in result: print(row)
 
 @SingletonDecorator
 class ServerLogger:
@@ -167,5 +170,5 @@ if __name__ == "__main__":
     # database.update_user(1235)
     # database.print_database()
     #database.convert_old_system_to_database()
-    database.print_database_to_file()
+    database.print_database()
 

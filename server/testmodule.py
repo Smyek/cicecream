@@ -38,7 +38,6 @@ def generate100():
 
 if __name__ == "__main__":
     from generation import PhraseGenerator
-    import utils
     generator = PhraseGenerator()
     generator.vk._TEST_MODE = True
     simple_test()
