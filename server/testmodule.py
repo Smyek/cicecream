@@ -26,7 +26,6 @@ def check_posting_service():
 def simple_test():
     global generator
     phrase = generator.generate_phrase_cheap()
-    generator.user_manager.update_uids_files()
     generator.vk.post_message(phrase)
 
 def generate100():
@@ -42,6 +41,6 @@ if __name__ == "__main__":
     import utils
     generator = PhraseGenerator()
     generator.vk._TEST_MODE = True
-    generate100()
+    simple_test()
 
 

@@ -1,11 +1,9 @@
-#!/usr/local/lib/python2.7
-#coding: utf-8
-
-import ssl
-if hasattr(ssl, '_create_unverified_context'):
-    ssl._create_default_https_context = ssl._create_unverified_context
+# import ssl
+# if hasattr(ssl, '_create_unverified_context'):
+#     ssl._create_default_https_context = ssl._create_unverified_context
 
 from utils import server_log
+from utils import database as database_users
 
 import vk, random, re, string
 from collections import defaultdict
@@ -69,10 +67,8 @@ class UserManager:
         self.vk = vkm
 
         #load
-        self.used_uids = self.load_used_uids()
-        self.ever_used_uids_with_frequency,\
-        self.ever_used_uids = self.load_ever_used_uids()
         self.group_uids = self.vk.get_ids()
+        database_users.update_users(self.group_uids)
 
         #selections
         self.never_used = self.find_never_used()
@@ -84,41 +80,14 @@ class UserManager:
         #log
         self.log()
 
-    def load_used_uids(self):
-        with open(USEDUIDS_FILE, "r", encoding="utf-8") as f:
-            content = f.read().split("\n")
-            if content == ['']: return []
-            return list(map(int, content))
-
-    def load_ever_used_uids(self):
-        with open(EVERUSEDUIDS_FILE, "r", encoding="utf-8") as f:
-            dictionary = defaultdict(int, [list(map(int, row.split("\t"))) for row in f.read().replace("\r\n","\n").split("\n")])
-            return dictionary, dictionary.keys()
-
     def add_to_used(self, id):
-        server_log.add_key_value_log("adding to used", id)
-        id = int(id)
-        self.used_uids.append(id)
-        self.ever_used_uids_with_frequency[id] += 1
-
-    def update_uids_files(self):
-        with open(USEDUIDS_FILE, "w", encoding="utf-8") as f:
-            f.write("\n".join(list(map(str, self.used_uids))))
-
-        with open(EVERUSEDUIDS_FILE, "w", encoding="utf-8") as f:
-            uids_with_freq = sorted(self.ever_used_uids_with_frequency.items(), key=lambda t: (t[1], t[0]), reverse=True)
-            uids_with_freq = ["\t".join(map(str, i)) for i in uids_with_freq]
-            f.write("\n".join(uids_with_freq))
-
-    def add_and_update_uids(self, id):
-        self.add_to_used(id)
-        self.update_uids_files()
+        database_users.increment_user_used(id)
 
     def find_never_used(self):
-        return list(set(self.group_uids) - set(self.used_uids))
+        return list(set(self.group_uids) & set(database_users.get_never_used_uids()))
 
     def find_not_used_on_cycle(self):
-        return list(set(self.group_uids) - set(self.ever_used_uids))
+        return list(set(self.group_uids) & set(database_users.get_not_used_oncycle_uids()))
 
     def choose_selection(self):
         for selection_id, selection in [("never_used", self.never_used),
@@ -248,7 +217,6 @@ class PhraseGenerator:
 def run_generation_job():
     generator = PhraseGenerator()
     phrase = generator.generate_phrase_cheap()
-    generator.user_manager.update_uids_files()
     generator.vk.post_message(phrase)
     return phrase
 
