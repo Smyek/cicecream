@@ -155,6 +155,10 @@ class ServerLogger:
         time_elapsed = "%.2f" % (time.time() - self.startime)
         self.add_log("\t"*4 + "Time elapsed from start: %s sec" % time_elapsed)
 
+# TOREFACTOR
+if not os.path.exists("service"):
+    os.makedirs("service")
+
 # Singletons init
 server_log = ServerLogger()
 database = DatabaseManager()
