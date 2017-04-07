@@ -50,7 +50,6 @@ class DatabaseManager:
             ever_used_uids_with_frequency = dictionary
 
         for user in ever_used_uids_with_frequency:
-            print(user)
             usedOnCycle = 1 if user in used_uids else 0
             self.forced_add_user(user, ever_used_uids_with_frequency[user], usedOnCycle)
         self.connection.commit()
