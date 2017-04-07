@@ -122,9 +122,12 @@ class DatabaseManager:
 
 @SingletonDecorator
 class ServerLogger:
-    def __init__(self, log_path = "service/server_logs.txt"):
+    def __init__(self, log_path = "/service/server_logs.txt"):
         self.startime = time.time()
         self.server_logs_path = log_path
+        print(self.server_logs_path)
+        self.server_logs_path = os.path.dirname(os.path.realpath(__file__)) + log_path
+        print(self.server_logs_path)
         logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s] %(message)s', level=logging.DEBUG,
                             filename=self.server_logs_path)
         self.onstart()
