@@ -1,3 +1,4 @@
+import os
 import logging
 import datetime, time
 import sqlite3
@@ -130,14 +131,14 @@ class ServerLogger:
         self.add_log("New session: %s" % date)
 
         #cleaning
-        self.current_logs = self.load_logs()
-        if len(self.current_logs) > 500:
-            # TODO
-            self.current_logs = []
+        self.clean_logs()
 
-    def load_logs(self):
-        with open(self.server_logs_path, "r", encoding="utf-8") as f:
-            return f.read().split("\n")
+
+    def clean_logs(self):
+        logs_size = os.path.getsize(self.server_logs_path)
+        if (logs_size / 1024*1024) > 3:
+            with open(self.server_logs_path, "w", encoding="utf-8") as f:
+                f.write("")
 
     def add_log(self, message, level_function=logging.debug):
         if isinstance(message, tuple):
