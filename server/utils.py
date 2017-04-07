@@ -124,8 +124,6 @@ class DatabaseManager:
 class ServerLogger:
     def __init__(self, log_path = "/service/server_logs.txt"):
         self.startime = time.time()
-        self.server_logs_path = log_path
-        print(self.server_logs_path)
         self.server_logs_path = os.path.dirname(os.path.realpath(__file__)) + log_path
         print(self.server_logs_path)
         logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s] %(message)s', level=logging.DEBUG,
@@ -159,8 +157,9 @@ class ServerLogger:
         self.add_log("\t"*4 + "Time elapsed from start: %s sec" % time_elapsed)
 
 # TOREFACTOR
-if not os.path.exists("service"):
-    os.makedirs("service")
+path_to_service = os.path.dirname(os.path.realpath(__file__)) + "/service"
+if not os.path.exists(path_to_service):
+    os.makedirs(path_to_service)
 
 # Singletons init
 server_log = ServerLogger()
