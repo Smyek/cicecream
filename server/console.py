@@ -11,7 +11,9 @@ class SICE_Console:
     def __init__(self):
         server_log.add_log("Console session: started", logging.info)
 
-        self.commands = {"Print database": self.print_database}
+        self.commands = {"Print database": self.print_database,
+                         "Convert old system to database": database.convert_old_system_to_database,
+                         }
 
         self.options = ["Exit"] + sorted(self.commands.keys())
         self.commands["Exit"] = self.exit

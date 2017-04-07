@@ -29,22 +29,26 @@ class DatabaseManager:
 
     # TEMPORARY TEMPORARY TEMPORARY TEMPORARY TEMPORARY TEMPORARY TEMPORARY
     def convert_old_system_to_database(self):
+        self.connection.close()
         from collections import defaultdict
-        DATA_FOLDER = "data/"
-        USERDATA_FOLDER = DATA_FOLDER + "userdata/"
-        USEDUIDS_FILE = USERDATA_FOLDER + "uidsUsed.txt"
-        EVERUSEDUIDS_FILE = USERDATA_FOLDER + "uids_ever_used.csv"
+        if os.path.isfile(self.database):
+            des = input("db already exists. Delete? (y/n)")
+            if des.lower().strip() == "y":
+                os.remove(self.database)
+            else: return
+        self.connection = sqlite3.connect(self.database)
+        self.cursor = self.connection.cursor()
+        self.create_table()
 
-        with open(USEDUIDS_FILE, "r", encoding="utf-8") as f:
+        with open(project_paths.temp_file("uidsUsed.txt"), "r", encoding="utf-8") as f:
             content = f.read().split("\n")
             if content == ['']: return []
             used_uids = list(map(int, content))
 
-        with open(EVERUSEDUIDS_FILE, "r", encoding="utf-8") as f:
+        with open(project_paths.temp_file("uids_ever_used.csv"), "r", encoding="utf-8") as f:
             dictionary = defaultdict(int, [list(map(int, row.split("\t"))) for row in f.read().replace("\r\n", "\n").split("\n")])
             ever_used_uids_with_frequency = dictionary
 
-        self.cursor.execute('CREATE TABLE users (id INTEGER PRIMARY KEY, usedCount INTEGER, usedOnCycle BOOLEAN, lastTimeUpdated INTEGER)')
         for user in ever_used_uids_with_frequency:
             print(user)
             usedOnCycle = 1 if user in used_uids else 0
@@ -161,11 +165,12 @@ class Paths:
         self.wd = os.path.dirname(os.path.realpath(__file__))
         self.service = os.path.join(self.wd, "service")
         self.data = os.path.join(self.wd, "data")
+        self.temp = os.path.join(self.wd, "temp")
 
         self.check_paths_existence()
 
     def check_paths_existence(self):
-        for path_to in [self.service]:
+        for path_to in [self.service, self.temp]:
             if not os.path.exists(path_to):
                 os.makedirs(path_to)
 
@@ -178,6 +183,9 @@ class Paths:
     def data_file(self, filename):
         return os.path.join(self.data, filename)
 
+    def temp_file(self, filename):
+        return os.path.join(self.temp, filename)
+
 # Singletons init
 project_paths = Paths()
 server_log = ServerLogger()
@@ -188,11 +196,5 @@ def close_connection():
     database.connection.close()
 
 if __name__ == "__main__":
-    #database.create_table()
-    # database.print_database()
-    # database.all_usedOnCycle_check()
-    # database.update_user(1235)
-    # database.print_database()
-    #database.convert_old_system_to_database()
     database.print_database()
 
