@@ -17,7 +17,7 @@ class SingletonDecorator:
 @SingletonDecorator
 class DatabaseManager:
     def __init__(self):
-        self.database = 'data/users.db'
+        self.database = project_paths.data_file('users.db')
         self.columns = "id, usedCount, usedOnCycle, lastTimeUpdated"
         self.connection = sqlite3.connect(self.database)
         self.cursor = self.connection.cursor()
@@ -113,7 +113,7 @@ class DatabaseManager:
     def print_database(self, to_file=True, on_screen=False):
         self.cursor.execute('SELECT * FROM users')
         users = self.cursor.fetchall()
-        with open("db_printed.txt", "w", encoding="utf-8") as f:
+        with open(project_paths.root_file("db_printed.txt"), "w", encoding="utf-8") as f:
             result = ["\t".join(list(map(str, user))) for user in users]
             if to_file:
                 f.write("\n".join(result))
@@ -122,10 +122,9 @@ class DatabaseManager:
 
 @SingletonDecorator
 class ServerLogger:
-    def __init__(self, log_path = "/service/server_logs.txt"):
+    def __init__(self, log_path = "server_logs.txt"):
         self.startime = time.time()
-        self.server_logs_path = os.path.dirname(os.path.realpath(__file__)) + log_path
-        print(self.server_logs_path)
+        self.server_logs_path = project_paths.service_file(log_path)
         logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s] %(message)s', level=logging.DEBUG,
                             filename=self.server_logs_path)
         self.onstart()
@@ -140,7 +139,7 @@ class ServerLogger:
 
     def clean_logs(self):
         logs_size = os.path.getsize(self.server_logs_path)
-        if (logs_size / 1024*1024) > 3:
+        if (logs_size / (1024*1024)) > 3:
             with open(self.server_logs_path, "w", encoding="utf-8") as f:
                 f.write("")
 
@@ -156,12 +155,31 @@ class ServerLogger:
         time_elapsed = "%.2f" % (time.time() - self.startime)
         self.add_log("\t"*4 + "Time elapsed from start: %s sec" % time_elapsed)
 
-# TOREFACTOR
-path_to_service = os.path.dirname(os.path.realpath(__file__)) + "/service"
-if not os.path.exists(path_to_service):
-    os.makedirs(path_to_service)
+@SingletonDecorator
+class Paths:
+    def __init__(self):
+        self.wd = os.path.dirname(os.path.realpath(__file__))
+        self.service = os.path.join(self.wd, "service")
+        self.data = os.path.join(self.wd, "data")
+
+        self.check_paths_existence()
+
+    def check_paths_existence(self):
+        for path_to in [self.service]:
+            if not os.path.exists(path_to):
+                os.makedirs(path_to)
+
+    def root_file(self, filename):
+        return os.path.join(self.wd, filename)
+
+    def service_file(self, filename):
+        return os.path.join(self.service, filename)
+
+    def data_file(self, filename):
+        return os.path.join(self.data, filename)
 
 # Singletons init
+project_paths = Paths()
 server_log = ServerLogger()
 database = DatabaseManager()
 

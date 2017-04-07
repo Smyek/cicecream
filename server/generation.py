@@ -4,17 +4,12 @@
 
 from utils import server_log
 from utils import database as database_users
+from utils import project_paths
 
 import vk, random, re, string
-from collections import defaultdict
 
-
-DATA_FOLDER = "data/"
-USERDATA_FOLDER = DATA_FOLDER + "userdata/"
-USEDUIDS_FILE = USERDATA_FOLDER + "uidsUsed.txt"
-EVERUSEDUIDS_FILE = USERDATA_FOLDER + "uids_ever_used.csv"
-WORDS_FILE = DATA_FOLDER + "words.txt"
-PATTERNS_FILE = DATA_FOLDER + "patterns.txt"
+WORDS_FILE = project_paths.data_file("words.txt")
+PATTERNS_FILE = project_paths.data_file("patterns.txt")
 
 class VKManager:
     def __init__(self):
@@ -27,14 +22,14 @@ class VKManager:
         self.load_config()
 
     def load_api_data(self):
-        with open(DATA_FOLDER + "apidata.csv", "r", encoding="utf-8") as f:
+        with open(project_paths.data_file("apidata.csv"), "r", encoding="utf-8") as f:
             data_rows = f.read().split("\n")
             for row in data_rows:
                 key, value = row.split(";")
                 self._API_DATA[key] = value
 
     def load_config(self):
-        with open(DATA_FOLDER + "config.csv", "r", encoding="utf-8") as f:
+        with open(project_paths.data_file("config.csv"), "r", encoding="utf-8") as f:
             data_rows = f.read().split("\r\n")
             for row in data_rows:
                 key, value = row.split(";")
@@ -140,7 +135,7 @@ class PhraseGenerator:
                 self.gram[gram] = words
 
     def random_pattern(self):
-        with open(DATA_FOLDER + "info.txt", "r", encoding="utf-8") as f:
+        with open(project_paths.data_file("info.txt"), "r", encoding="utf-8") as f:
             index = random.randint(0, int(f.read()))
             server_log.add_key_value_log("pattern", index+1)
         with open(PATTERNS_FILE, "r", encoding="utf-8") as f:
