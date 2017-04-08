@@ -206,8 +206,23 @@ class Paths:
     def temp_file(self, filename):
         return os.path.join(self.temp, filename)
 
+@SingletonDecorator
+class ServerConfig:
+    def __init__(self):
+        self.is_test = True
+        self.load_config()
+
+    def load_config(self):
+        with open(project_paths.data_file("config.csv"), "r", encoding="utf-8") as f:
+            data_rows = f.read().split("\r\n")
+            for row in data_rows:
+                key, value = row.split(";")
+                if key == "test_mode":
+                    self.is_test = "True" == value
+
 # Singletons init
 project_paths = Paths()
+server_config = ServerConfig()
 server_log = ServerLogger()
 database = DatabaseManager()
 

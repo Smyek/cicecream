@@ -3,6 +3,7 @@
 from utils import server_log
 from utils import database as database_users
 from utils import project_paths
+from utils import server_config
 
 import vk, random, re, string
 
@@ -16,9 +17,6 @@ class VKManager:
         self.session = vk.Session(access_token=self._API_DATA["token"])
         self.vk = vk.API(self.session)
 
-        self._TEST_MODE = True
-        self.load_config()
-
     def load_api_data(self):
         with open(project_paths.data_file("apidata.csv"), "r", encoding="utf-8") as f:
             data_rows = f.read().split("\n")
@@ -26,18 +24,10 @@ class VKManager:
                 key, value = row.split(";")
                 self._API_DATA[key] = value
 
-    def load_config(self):
-        with open(project_paths.data_file("config.csv"), "r", encoding="utf-8") as f:
-            data_rows = f.read().split("\r\n")
-            for row in data_rows:
-                key, value = row.split(";")
-                if key == "test_mode":
-                    self._TEST_MODE = "True" == value
-
     # post vk via smorozhenoe group
     def post_message(self, message_text):
         group_id = "-92940311"
-        if self._TEST_MODE:
+        if server_config.is_test:
             group_id = "-125307022"
         self.vk.get(method="wall.post", message=message_text, owner_id=group_id)
 
