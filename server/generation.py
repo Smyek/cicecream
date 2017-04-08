@@ -1,6 +1,4 @@
-# import ssl
-# if hasattr(ssl, '_create_unverified_context'):
-#     ssl._create_default_https_context = ssl._create_unverified_context
+#coding: utf-8
 
 from utils import server_log
 from utils import database as database_users
