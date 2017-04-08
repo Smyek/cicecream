@@ -14,6 +14,7 @@ class SICE_Console:
         self.commands = {"Print database": self.print_database,
                          "Convert old system to database": database.convert_old_system_to_database,
                          "Generate phrase and post to Test": self.generate_phrase_and_post,
+                         "Print 10 last logs": self.print_logs,
                          }
 
         self.options = ["Exit"] + sorted(self.commands.keys())
@@ -49,6 +50,10 @@ class SICE_Console:
         phrase = generator.generate_phrase_cheap()
         generator.vk.post_message(phrase)
         server_log.add_log("phrase has been posted to the test group", logging.debug)
+
+    def print_logs(self, logs_count=10):
+        for log in server_log.get_logs_list()[-logs_count:]:
+            print(log)
 
     def print_database(self):
         database.print_database(to_file=False, on_screen=True)

@@ -139,6 +139,10 @@ class ServerLogger:
         #cleaning
         self.clean_logs()
 
+    def get_logs_list(self):
+        with open(self.server_logs_path, "r", encoding="utf-8") as f:
+            logs = f.read().strip().split("\n")
+        return logs
 
     def clean_logs(self):
         logs_size = os.path.getsize(self.server_logs_path)
