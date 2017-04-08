@@ -146,7 +146,7 @@ class ServerLogger:
         self.startime = time.time()
         self.server_logs_path = project_paths.service_file(log_path)
         logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s] %(message)s', level=logging.DEBUG,
-                            handlers=[logging.FileHandler(self.server_logs_path, 'a', 'utf-8')])
+                            handlers=[logging.FileHandler(self.server_logs_path, 'a', encoding='utf-8')])
         self.onstart()
 
     def onstart(self):
