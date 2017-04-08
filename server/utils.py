@@ -133,12 +133,12 @@ class DatabaseManager:
     def print_database(self, to_file=True, on_screen=False):
         self.cursor.execute('SELECT * FROM users')
         users = self.cursor.fetchall()
-        with open(project_paths.root_file("db_printed.txt"), "w", encoding="utf-8") as f:
-            result = ["\t".join(list(map(str, user))) for user in users]
-            if to_file:
+        result = ["\t".join(list(map(str, user))) for user in users]
+        if to_file:
+            with open(project_paths.root_file("db_printed.txt"), "w", encoding="utf-8") as f:
                 f.write("\n".join(result))
-            if on_screen:
-                for row in result: print(row)
+        if on_screen:
+            for row in result: print(row)
 
 @SingletonDecorator
 class ServerLogger:
