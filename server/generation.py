@@ -43,16 +43,16 @@ class VKManager:
 
     def get_ids(self, group_id="92940311"):
         uids = []
-        members_count = self.vk.get(method="groups.getById", group_id=group_id, fields=u"members_count")[0][u"members_count"]
+        members_count = self.vk.get(method="groups.getById", group_id=group_id, fields="members_count")[0]["members_count"]
         for offset in range(0, members_count, 1000):
             uids += self.vk.get(method="groups.getMembers", group_id=group_id, offset=offset)['users']
         return uids
 
     def get_name(self, id, case='nom'):
-        user = self.vk.get(method="users.get", user_ids=id, name_case=case, fields=u'first_name, last_name, sex')[0]
-        name = u"%s %s" % (user[u"first_name"], user[u"last_name"])
-        sexDict = {1: u"f", 2: u"m", 0: u"m", 3: u"m"}
-        sex = sexDict[user[u"sex"]]
+        user = self.vk.get(method="users.get", user_ids=id, name_case=case, fields='first_name, last_name, sex')[0]
+        name = "%s %s" % (user["first_name"], user["last_name"])
+        sexDict = {1: "f", 2: "m", 0: "m", 3: "m"}
+        sex = sexDict[user["sex"]]
         return name, sex
 
 class UserManager:
@@ -110,7 +110,7 @@ class PhraseGenerator:
     def __init__(self):
         self.sentence_patterns = {}
         self.gram = {}
-        self.reGram = re.compile(u"(,|=)")
+        self.reGram = re.compile("(,|=)")
 
         self.current_id = None
         self.current_username = None
@@ -128,7 +128,7 @@ class PhraseGenerator:
     def load_words(self):
         with open(WORDS_FILE, "r", encoding="utf-8") as f:
             for line in f:
-                line = line.strip().split(u"\t")
+                line = line.strip().split("\t")
                 gram, words = line[0], line[1:]
                 self.gram[gram] = words
 
@@ -143,59 +143,59 @@ class PhraseGenerator:
                 count += 1
 
     def upper_repl(self, match):
-         return match.group(1) + u" " + match.group(2).upper()
+         return match.group(1) + " " + match.group(2).upper()
 
     def make_username(self, UID, NAME):
-        pattern = u"@id%s (%s)" % (UID, NAME)
+        pattern = "@id%s (%s)" % (UID, NAME)
         return pattern
 
     def user_link(self, match):
         return self.make_username(match.group(1), self.current_username)
 
     def phrase_refine(self, phrase):
-        phrase = u" ".join(phrase)# + "."
-        phrase = re.sub(u" ?-? ?-\.?$", u"", phrase)
-        phrase = re.sub(u"^--? ?", u"", phrase)
-        phrase = re.sub(u"- ?-", u"—", phrase)
-        phrase = re.sub(u"</? >", u"", phrase)
-        phrase = re.sub(u"([«\"]) ?(.+?) ?([»\"])", u"\\1\\2\\3", phrase)
-        phrase = re.sub(u"([^" + string.punctuation + u"]) ([" + string.punctuation + "])", u"\\1\\2", phrase)
-        phrase = re.sub(u"(@[^" + string.punctuation + u"]+?) ([" + string.punctuation + u"])", u"\\1\\2", phrase)
-        phrase = re.sub(u"(@[^" + string.punctuation.replace(u"_", u"") + u"]+?)-", u"\\1 -", phrase)
-        phrase = re.sub(u"(.)@", u"\\1 @", phrase)
-        phrase = re.sub(u" ?\( ", u" (", phrase)
-        phrase = re.sub(u"- то([ ?!.])", u"-то\\1", phrase)
-        phrase = re.sub(u"([А-Яа-яЁё])- ", u"\\1 - ", phrase)
+        phrase = " ".join(phrase)# + "."
+        phrase = re.sub(" ?-? ?-\.?$", "", phrase)
+        phrase = re.sub("^--? ?", "", phrase)
+        phrase = re.sub("- ?-", "—", phrase)
+        phrase = re.sub("</? >", "", phrase)
+        phrase = re.sub("([«\"]) ?(.+?) ?([»\"])", "\\1\\2\\3", phrase)
+        phrase = re.sub("([^" + string.punctuation + "]) ([" + string.punctuation + "])", "\\1\\2", phrase)
+        phrase = re.sub("(@[^" + string.punctuation + "]+?) ([" + string.punctuation + "])", "\\1\\2", phrase)
+        phrase = re.sub("(@[^" + string.punctuation.replace("_", "") + "]+?)-", "\\1 -", phrase)
+        phrase = re.sub("(.)@", "\\1 @", phrase)
+        phrase = re.sub(" ?\( ", " (", phrase)
+        phrase = re.sub("- то([ ?!.])", "-то\\1", phrase)
+        phrase = re.sub("([А-Яа-яЁё])- ", "\\1 - ", phrase)
 
-        phrase = re.sub(u"([^\"]*?)\"([^\"]*?)", u"\\1\\2", phrase)
-        phrase = re.sub(u"([^\(]*?)\(([^\(]*?)", u"\\1\\2", phrase)
-        phrase = re.sub(u"([^\)]*?)\)([^\)]*?)", u"\\1\\2", phrase)
+        phrase = re.sub("([^\"]*?)\"([^\"]*?)", "\\1\\2", phrase)
+        phrase = re.sub("([^\(]*?)\(([^\(]*?)", "\\1\\2", phrase)
+        phrase = re.sub("([^\)]*?)\)([^\)]*?)", "\\1\\2", phrase)
 
 
         phrase = phrase[0].upper() + phrase[1:]
-        phrase = re.sub(u"([!.?] ?)([а-яё])", self.upper_repl, phrase) #здесь нужно сделать функцию которая повышает регистр буквы после знака конца предложения в его середине
-        phrase = re.sub(u"(\r)?\n", u"", phrase)
-        # phrase = re.sub(u"^@", u"… @", phrase)
-        phrase = re.sub(u" +", u" ", phrase)
-        phrase = re.sub(u"[Ii]d([0-9]+)", self.user_link, phrase)
+        phrase = re.sub("([!.?] ?)([а-яё])", self.upper_repl, phrase) #здесь нужно сделать функцию которая повышает регистр буквы после знака конца предложения в его середине
+        phrase = re.sub("(\r)?\n", "", phrase)
+        # phrase = re.sub("^@", "… @", phrase)
+        phrase = re.sub(" +", " ", phrase)
+        phrase = re.sub("[Ii]d([0-9]+)", self.user_link, phrase)
         return phrase.strip()
 
     def word_modifier(self, word, gram):
-        for gr in [u"persn", u"famn", u"patrn", u"geo"]:
+        for gr in ["persn", "famn", "patrn", "geo"]:
             if gr in gram:
                 word = word[0].upper() + word[1:]
         return word
 
     def generate_phrase_cheap(self, username=None, sex=None):
         phrase = []
-        pattern = self.random_pattern().strip().split(u"_+_")
+        pattern = self.random_pattern().strip().split("_+_")
         for gram in pattern:
-            if u"<username>" in gram:
+            if "<username>" in gram:
                 if username is None:
                     self.current_id = self.user_manager.choose_random_uid()
                     username, sex = self.vk.get_name(self.current_id, "nom")
-                if u",%s," % sex not in gram: return self.generate_phrase_cheap(username, sex)
-                phrase.append(u"id" + str(self.current_id)) #make_username(self.current_id, username)
+                if ",%s," % sex not in gram: return self.generate_phrase_cheap(username, sex)
+                phrase.append("id" + str(self.current_id)) #make_username(self.current_id, username)
                 self.current_username = username
                 continue
             if gram not in self.gram: return self.generate_phrase_cheap(username, sex)
