@@ -18,7 +18,8 @@ class SingletonDecorator:
 class DatabaseManager:
     def __init__(self):
         self.database = project_paths.data_file('users.db')
-        self.columns = "id, usedCount, usedOnCycle, lastTimeUpdated"
+        self.columns = ["id", "usedCount", "usedOnCycle", "lastTimeUpdated"]
+        self.columns_sql = ", ".join(self.columns)
         self.connection = sqlite3.connect(self.database)
         self.cursor = self.connection.cursor()
 
@@ -55,7 +56,7 @@ class DatabaseManager:
         self.connection.commit()
 
     def forced_add_user(self, id, usedCount, usedOnCycle):
-        self.cursor.execute('INSERT INTO users (%s) VALUES(%s, %s, %s, %s)' % (self.columns, id, usedCount, usedOnCycle, self.timestamp()))
+        self.cursor.execute('INSERT INTO users (%s) VALUES(%s, %s, %s, %s)' % (self.columns_sql, id, usedCount, usedOnCycle, self.timestamp()))
 
 
     # checkers
@@ -64,7 +65,7 @@ class DatabaseManager:
         for id in group_uids:
             result = self.cursor.execute("SELECT * FROM users WHERE id = %s" % id).fetchall()
             if not result:
-                self.cursor.execute('INSERT INTO users (%s) VALUES(%s, 0, 0, %s)' % (self.columns, id, self.timestamp()))
+                self.cursor.execute('INSERT INTO users (%s) VALUES(%s, 0, 0, %s)' % (self.columns_sql, id, self.timestamp()))
                 new_users.append(id)
         if new_users:
             server_log.add_log('New users: %s' % ", ".join(list(map(str,new_users))), logging.info)
@@ -100,6 +101,22 @@ class DatabaseManager:
         return self.get_selection_uids("SELECT id FROM users WHERE usedOnCycle = 0",
                                        "All uids were used on current cycle")
 
+    # extra tools
+    def clear_usedOnCycle_by_uid(self, id):
+        result = self.cursor.execute("SELECT * FROM users WHERE id = %s" % id).fetchall()
+        if result:
+            self.cursor.execute("UPDATE users SET usedOnCycle = 0 WHERE id = %s" % id)
+            self.connection.commit()
+        else:
+            server_log.add_log("User %s was not found in db" % id, logging.warning)
+
+    def get_user_by_uid(self, id):
+        result = self.cursor.execute("SELECT * FROM users WHERE id = %s" % id).fetchall()
+        if result:
+            return result
+        else:
+            server_log.add_log("User %s was not found in db" % id, logging.warning)
+
     # auxiliary
     def timestamp(self):
         # TODO
@@ -129,7 +146,7 @@ class ServerLogger:
         self.startime = time.time()
         self.server_logs_path = project_paths.service_file(log_path)
         logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s] %(message)s', level=logging.DEBUG,
-                            filename=self.server_logs_path)
+                            handlers=[logging.FileHandler(self.server_logs_path, 'a', 'utf-8')])
         self.onstart()
 
     def onstart(self):
