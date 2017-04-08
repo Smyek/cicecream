@@ -90,7 +90,10 @@ class SICE_Console:
                 try: logs_count = int(self.arguments_buffer[0])
                 except: print('Must be integer or "all". Default count used.')
         for log in server_log.get_logs_list()[-logs_count:]:
-            print(log)
+            try:
+                print(log)
+            except UnicodeEncodeError:
+                print(log.encode('cp1251'))
 
     def print_database(self):
         database.print_database(to_file=False, on_screen=True)
