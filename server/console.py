@@ -41,7 +41,7 @@ class SICE_Console:
     def parse_input(self, user_input):
         refined = re.sub("\s\s+", " ", user_input.strip())
         option = re.search("^(\d+)", refined)
-        arguments = re.findall("(?:-)([^ ]+)", refined)
+        arguments = re.findall('(?:-)([^ ]+)', refined)
         if not option:
             print("ERROR: must be integer.")
             return None
@@ -84,10 +84,13 @@ class SICE_Console:
     # LISTS
     def database_list(self):
         options = self.list_template + [("Print database", self.print_database),
+                                        ("Run SQL query", self.run_sql_query),
                                         ("Convert old system to database", database.convert_old_system_to_database),
                                         ("Set -uid attribute usedOnCycle to 0", self.set_usedOnCycle_by_uid),
                                         ("Get user info by -uid", self.print_user_info_by_uid),
                                         ("Get user by -colname -value", self.print_uids_by_col_value),
+                                        ("Set all usedCount -n", self.set_all_usedCount_n),
+                                        ("Set all as usedOnCycle", self.set_all_as_usedOnCycle),
                                         ]
         self.options_lists.append(options)
 
@@ -99,18 +102,17 @@ class SICE_Console:
 
     def backups_list(self):
         options = self.list_template + [("Save users backup manually", self.save_users_backup_to_manual),
-                                        ("Load users backup", self.load_users_backup),
+                                        ("Load users backup (-t for temporary)", self.load_users_backup),
                                         ]
         self.options_lists.append(options)
 
+
     # COMMANDS
-    def generate_phrase_and_post(self):
-        from generation import PhraseGenerator
-        generator = PhraseGenerator()
-        generator.vk._TEST_MODE = True
-        phrase = generator.generate_phrase_cheap()
-        generator.vk.post_message(phrase)
-        server_log.add_log("phrase has been posted to the test group", logging.debug)
+    ## DATABASE options
+    def run_sql_query(self):
+        squery = input("Query: ")
+        backups.make_file_backup(project_paths.users, project_paths.temp_file)
+        database.run_sql(squery)
 
     def set_usedOnCycle_by_uid(self):
         if not self.arguments_buffer:
@@ -140,6 +142,26 @@ class SICE_Console:
         for row in database.get_user_by_col_value(colname, value):
             print(row)
 
+    def set_all_usedCount_n(self):
+        count = 1
+        if self.arguments_buffer:
+            count = self.try_get_integer_argument()
+        backups.make_file_backup(project_paths.users, project_paths.temp_file)
+        database.set_all_usedCount_n(count)
+
+    def set_all_as_usedOnCycle(self):
+        condition = False
+        if self.arguments_buffer:
+            if self.arguments_buffer[0] == "-a":
+                condition = True
+        backups.make_file_backup(project_paths.users, project_paths.temp_file)
+        database.set_all_as_usedOnCycle(condition)
+
+    def print_database(self):
+        database.print_database(to_file=False, on_screen=True)
+
+
+    ## LOGS options
     def print_logs(self, logs_count=10):
         if self.arguments_buffer:
             if self.arguments_buffer[0] == "a":
@@ -157,20 +179,28 @@ class SICE_Console:
         if not self.are_you_sure(): return
         server_log.delete_logs()
 
-    def print_database(self):
-        database.print_database(to_file=False, on_screen=True)
 
     ## BACKUPS OPTIONS
-
     def save_users_backup_to_manual(self):
         if not self.are_you_sure(): return
         backups.make_file_backup(project_paths.users, project_paths.backup_file)
 
     def load_users_backup(self):
-        backups.make_file_backup(project_paths.users, project_paths.temp_file)
-        backups.load_backup(project_paths.users, project_paths.backup_file)
+        if self.arguments_buffer:
+            if self.arguments_buffer[0] == "t":
+                backups.load_backup(project_paths.users, project_paths.temp_file)
+        else:
+            backups.load_backup(project_paths.users, project_paths.backup_file)
+
 
     ## other
+    def generate_phrase_and_post(self):
+        from generation import PhraseGenerator
+        generator = PhraseGenerator()
+        generator.vk._TEST_MODE = True
+        phrase = generator.generate_phrase_cheap()
+        generator.vk.post_message(phrase)
+        server_log.add_log("phrase has been posted to the test group", logging.debug)
 
     def back(self):
         self.options_lists = self.options_lists[:-1]

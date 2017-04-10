@@ -109,7 +109,15 @@ class DatabaseManager:
         return self.get_selection_uids("SELECT id FROM users WHERE usedOnCycle = 0",
                                        "All uids were used on current cycle")
 
+
     # extra tools
+    def run_sql(self, sql_command):
+        result = self.cursor.execute(sql_command)
+        if result:
+            print(result)
+        self.connection.commit()
+        server_log.add_log("SQL query executed: %s" % sql_command)
+
     def clear_usedOnCycle_by_uid(self, id):
         result = self.cursor.execute("SELECT * FROM users WHERE id = %s" % id).fetchall()
         if result:
@@ -131,6 +139,15 @@ class DatabaseManager:
             return result
         else:
             print("Users with this parameters were not found")
+
+    def set_all_usedCount_n(self, n=1):
+        self.cursor.execute("UPDATE users SET usedCount = %s" % n)
+        self.connection.commit()
+
+    def set_all_as_usedOnCycle(self, all_uids=True):
+        condition = " WHERE isInGroup = 1" if all_uids else ""
+        self.cursor.execute("UPDATE users SET usedOnCycle = 1%s" % condition)
+        self.connection.commit()
 
     # auxiliary
     def timestamp(self):
