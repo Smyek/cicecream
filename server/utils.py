@@ -20,14 +20,14 @@ class SingletonDecorator:
 class DatabaseManager:
     def __init__(self):
         self.database = project_paths.data_file('users.db')
-        self.columns = ["id", "usedCount", "usedOnCycle", "lastTimeUpdated"]
+        self.columns = ["id", "usedCount", "usedOnCycle", "isInGroup", "lastTimeUpdated"]
         self.columns_sql = ", ".join(self.columns)
         self.connection = sqlite3.connect(self.database)
         self.cursor = self.connection.cursor()
 
     # REMINDER
     def create_table(self):
-        self.cursor.execute('CREATE TABLE users (id INTEGER PRIMARY KEY, usedCount INTEGER, usedOnCycle BOOLEAN, lastTimeUpdated INTEGER)')
+        self.cursor.execute('CREATE TABLE users (id INTEGER PRIMARY KEY, usedCount INTEGER, usedOnCycle BOOLEAN, isInGroup BOOLEAN, lastTimeUpdated INTEGER)')
         self.connection.commit()
 
     # TEMPORARY TEMPORARY TEMPORARY TEMPORARY TEMPORARY TEMPORARY TEMPORARY
@@ -58,30 +58,36 @@ class DatabaseManager:
         self.connection.commit()
 
     def forced_add_user(self, id, usedCount, usedOnCycle):
-        self.cursor.execute('INSERT INTO users (%s) VALUES(%s, %s, %s, %s)' % (self.columns_sql, id, usedCount, usedOnCycle, self.timestamp()))
+        self.cursor.execute('INSERT INTO users (%s) VALUES(%s, %s, %s, 1, %s)' % (self.columns_sql, id, usedCount, usedOnCycle, self.timestamp()))
 
 
-    # checkers
+    # checkers (doesn't need commit if run by self.update_users)
     def new_users_check(self, group_uids):
         new_users = []
         for id in group_uids:
             result = self.cursor.execute("SELECT * FROM users WHERE id = %s" % id).fetchall()
             if not result:
-                self.cursor.execute('INSERT INTO users (%s) VALUES(%s, 0, 0, %s)' % (self.columns_sql, id, self.timestamp()))
+                self.cursor.execute('INSERT INTO users (%s) VALUES(%s, 0, 0, 1, %s)' % (self.columns_sql, id, self.timestamp()))
                 new_users.append(id)
         if new_users:
             server_log.add_log('New users: %s' % ", ".join(list(map(str,new_users))), logging.info)
 
+    def users_not_in_group_check(self, group_uids):
+        for row in self.cursor.execute("SELECT id FROM users"):
+            uid = row[0]
+            if uid not in group_uids:
+                self.cursor.execute("UPDATE users SET isInGroup = 0 WHERE id = %s" % uid)
+
     def all_usedOnCycle_check(self):
-        result = self.cursor.execute("SELECT id FROM users WHERE usedOnCycle = 0").fetchall()
+        result = self.cursor.execute("SELECT id FROM users WHERE usedOnCycle = 0 AND isInGroup = 1").fetchall()
         if not result:
             self.cursor.execute("UPDATE users SET usedOnCycle = 0")
-            self.connection.commit()
 
 
     # used by UserManager
     def update_users(self, group_uids):
         self.new_users_check(group_uids)
+        self.users_not_in_group_check(group_uids)
         self.all_usedOnCycle_check()
         self.connection.commit()
 
@@ -89,7 +95,7 @@ class DatabaseManager:
         result = self.cursor.execute("SELECT * FROM users WHERE id = %s" % id).fetchall()
         if result:
             updated_usedCount = result[0][1] + 1
-            self.cursor.execute("UPDATE users SET usedCount = %s, usedOnCycle = 1 WHERE id = %s" % (updated_usedCount, id))
+            self.cursor.execute("UPDATE users SET usedCount = %s, lastTimeUpdated = %s, usedOnCycle = 1 WHERE id = %s" % (updated_usedCount, self.timestamp(), id))
             self.connection.commit()
             server_log.add_log("User %s incremented" % id)
         else:
@@ -119,10 +125,20 @@ class DatabaseManager:
         else:
             server_log.add_log("User %s was not found in db" % id, logging.warning)
 
+    def get_user_by_col_value(self, colname, value):
+        result = self.cursor.execute("SELECT * FROM users WHERE %s = %s" % (colname, value)).fetchall()
+        if result:
+            return result
+        else:
+            print("Users with this parameters were not found")
+
     # auxiliary
     def timestamp(self):
-        # TODO
-        return '1491570661'
+        return timemanager.time_now()
+
+    def add_column(self, colname, coltype):
+        self.cursor.execute("ALTER TABLE users ADD COLUMN %s %s" % (colname, coltype));
+        self.connection.commit()
 
     def get_selection_uids(self, sql, message_not_found):
         result = self.cursor.execute(sql).fetchall()
@@ -179,7 +195,7 @@ class ServerLogger:
 
     def add_time_elapsed(self):
         time_elapsed = "%.2f" % (time.time() - self.startime)
-        self.add_log("\t"*4 + "Time elapsed from start: %s sec" % time_elapsed)
+        self.add_log("Time elapsed from start: %s sec" % time_elapsed)
 
 @SingletonDecorator
 class Paths:
@@ -222,8 +238,22 @@ class ServerConfig:
                 if key == "test_mode":
                     self.is_test = "True" == value
 
+@SingletonDecorator
+class TimeManager:
+    def time_now(self):
+        return int(time.time())
+
+    def time_difference(self, t1, t2):
+        return abs(int(t1-t2))
+
+    def time_readable(self):
+        # TODO
+        pass
+
+
 # Singletons init
 project_paths = Paths()
+timemanager = TimeManager()
 server_config = ServerConfig()
 server_log = ServerLogger()
 database = DatabaseManager()

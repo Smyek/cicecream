@@ -20,6 +20,7 @@ class SICE_Console:
                          "Print 10 last logs": self.print_logs,
                          "Set -uid attribute usedOnCycle to 0": self.set_usedOnCycle_by_uid,
                          "Get user info by -uid": self.print_user_info_by_uid,
+                         "Get user by -colname -value": self.print_uids_by_col_value,
                          }
 
         self.options = ["Exit"] + sorted(self.commands.keys())
@@ -55,6 +56,23 @@ class SICE_Console:
             print(i, self.options[i])
         print(0, self.options[0])
 
+
+    # AUXILIARY
+    def is_buffer_empty(self):
+        if not self.arguments_buffer:
+            print("ERROR: Arguments must be specified.")
+            return True
+        return False
+
+    def try_get_integer_argument(self, i=0):
+        try:
+            value = int(self.arguments_buffer[i])
+            return value
+        except:
+            print('Argument must be integer.')
+            return None
+
+
     # COMMANDS
     def generate_phrase_and_post(self):
         from generation import PhraseGenerator
@@ -84,6 +102,14 @@ class SICE_Console:
         for i in range(len(database.columns)):
             print("%s: %s" % (database.columns[i], user_info[i]))
 
+    def print_uids_by_col_value(self):
+        if self.is_buffer_empty(): return
+        colname = self.arguments_buffer[0]
+        value = self.arguments_buffer[1]
+        print(colname, value)
+        for row in database.get_user_by_col_value(colname, value):
+            print(row)
+
     def print_logs(self, logs_count=10):
         if self.arguments_buffer:
             if self.arguments_buffer[0] == "all":
@@ -103,15 +129,6 @@ class SICE_Console:
     def exit(self):
         print("Have a nice day.")
         return "EXIT"
-
-    # AUXILIARY
-    def try_get_integer_argument(self, i=0):
-        try:
-            value = int(self.arguments_buffer[i])
-            return value
-        except:
-            print('Argument must be integer.')
-            return None
 
 
 if __name__ == "__main__":
