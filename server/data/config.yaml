@@ -1,0 +1,3 @@
+config:
+  ver: 1.0.0
+  test_mode: True

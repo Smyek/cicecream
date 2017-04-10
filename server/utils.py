@@ -5,6 +5,7 @@ import logging
 import datetime, time
 import sqlite3
 import atexit
+import yaml
 
 class SingletonDecorator:
     def __init__(self, p_class):
@@ -230,6 +231,7 @@ class Paths:
         self.check_paths_existence()
 
         # Constant file paths
+        self.config = self.data_file("config.yaml")
         self.users = self.data_file('users.db')
 
     def check_paths_existence(self):
@@ -255,16 +257,19 @@ class Paths:
 @SingletonDecorator
 class ServerConfig:
     def __init__(self):
+        self.config = None
         self.is_test = True
         self.load_config()
 
     def load_config(self):
-        with open(project_paths.data_file("config.csv"), "r", encoding="utf-8") as f:
-            data_rows = f.read().split("\r\n")
-            for row in data_rows:
-                key, value = row.split(";")
-                if key == "test_mode":
-                    self.is_test = "True" == value
+        self.config = YamlHandler(project_paths.config)
+        self.is_test = self.config.get_alias_value("config.test_mode")
+
+    def set_to_release(self):
+        self.config.set_alias_value("config.test_mode", "False")
+
+    def get_config(self):
+        return self.config.doc
 
 @SingletonDecorator
 class BackupManager:
@@ -316,6 +321,36 @@ class BackupManager:
                 hash_md5.update(chunk)
         return hash_md5.hexdigest()
 
+class YamlHandler:
+    def __init__(self, document):
+        self.pth = document
+        self.doc = self.load_doc()
+
+    def load_doc(self):
+        with open(self.pth, "r", encoding="utf-8") as f:
+            return yaml.load(f)
+
+    def alias_split(self, alias):
+        return alias.split(".")
+
+    def get_alias_value(self, alias):
+        alias = self.alias_split(alias)
+        alias_value, last_subtree, key = self.walk_yaml(alias, self.doc)
+        return alias_value
+
+    def set_alias_value(self, alias, value):
+        alias = self.alias_split(alias)
+        alias_value, last_subtree, key = self.walk_yaml(alias, self.doc)
+        last_subtree[key] = value
+
+    def walk_yaml(self, alias, sub_tree=None):
+        if sub_tree is None: sub_tree = self.doc
+        if len(alias) > 1:
+            alias_parts = alias[1:]
+            return self.walk_yaml(alias_parts, sub_tree[alias[0]])
+        else:
+            return sub_tree[alias[0]], sub_tree, alias[0]
+
 
 
 @SingletonDecorator
@@ -345,7 +380,5 @@ def close_connection():
     database.connection.close()
 
 if __name__ == "__main__":
-    #backups.make_file_backup(project_paths.users, to_dir=project_paths.backup_file)
-    #backups.clear_temporary_backup(project_paths.users)
-    backups.load_backup(project_paths.users)
+    pass
 

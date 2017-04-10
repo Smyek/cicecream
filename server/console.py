@@ -4,6 +4,7 @@ import logging
 import atexit
 import re
 from utils import server_log
+from utils import server_config
 from utils import database
 from utils import backups
 from utils import project_paths
@@ -18,7 +19,7 @@ class SICE_Console:
         #server_log.add_log("Console session: started", logging.info)
 
         self.commands = [("Exit", self.exit),
-                         ("Generate phrase and post to Test", self.generate_phrase_and_post),
+                         ("Generate phrase and post to %s" % self.post_mode().upper(), self.generate_phrase_and_post),
                          ("> Database options", self.database_list),
                          ("> Logs options", self.logs_list),
                          ("> Backup options", self.backups_list),
@@ -80,6 +81,13 @@ class SICE_Console:
         if decision == "y":
             return True
         return False
+
+    def post_mode(self):
+        if server_config.is_test:
+            return "Test"
+        else:
+            return "Release"
+
 
     # LISTS
     def database_list(self):
