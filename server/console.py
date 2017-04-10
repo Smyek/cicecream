@@ -8,11 +8,12 @@ from utils import database
 
 @atexit.register
 def close_connection():
-    server_log.add_log("Console session: closed", logging.info)
+    #server_log.add_log("Console session: closed", logging.info)
+    pass
 
 class SICE_Console:
     def __init__(self):
-        server_log.add_log("Console session: started", logging.info)
+        #server_log.add_log("Console session: started", logging.info)
 
         self.commands = [("Exit", self.exit),
                          ("Generate phrase and post to Test", self.generate_phrase_and_post),
@@ -71,6 +72,11 @@ class SICE_Console:
             print('Argument must be integer.')
             return None
 
+    def are_you_sure(self):
+        decision = input("Are you sure? (y/n)").strip().lower()
+        if decision == "y":
+            return True
+        return False
 
     # LISTS
     def database_list(self):
@@ -84,6 +90,7 @@ class SICE_Console:
 
     def logs_list(self):
         options = self.list_template + [("Print -n last logs (10 by default)", self.print_logs),
+                                        ("Delete logs", self.delete_logs),
                                         ]
         self.options_lists.append(options)
 
@@ -137,6 +144,10 @@ class SICE_Console:
                 print(log)
             except UnicodeEncodeError:
                 print(log.encode('cp1251', errors="replace"))
+
+    def delete_logs(self):
+        if not self.are_you_sure(): return
+        server_log.delete_logs()
 
     def print_database(self):
         database.print_database(to_file=False, on_screen=True)

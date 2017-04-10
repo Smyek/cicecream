@@ -172,18 +172,22 @@ class ServerLogger:
         self.add_log("New session: %s" % date)
 
         #cleaning
-        self.clean_logs()
+        self.clean_logs_procedures()
 
     def get_logs_list(self):
         with open(self.server_logs_path, "r", encoding="utf-8") as f:
             logs = f.read().strip().split("\n")
         return logs
 
-    def clean_logs(self):
+    def clean_logs_procedures(self):
         logs_size = os.path.getsize(self.server_logs_path)
         if (logs_size / (1024*1024)) > 3:
-            with open(self.server_logs_path, "w", encoding="utf-8") as f:
-                f.write("")
+            self.delete_logs()
+
+    def delete_logs(self):
+        with open(self.server_logs_path, "w", encoding="utf-8") as f:
+            f.write("")
+        server_log.add_log("Logs were cleaned")
 
     def add_log(self, message, level_function=logging.debug):
         if isinstance(message, tuple):
