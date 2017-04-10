@@ -1,3 +1,4 @@
+#!/usr/bin/python3.5
 #coding:utf-8
 from generation import VKManager
 from collections import defaultdict
