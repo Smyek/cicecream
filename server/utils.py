@@ -1,6 +1,6 @@
 #!/usr/bin/python3.5
 
-import os
+import os, shutil, ntpath
 import logging
 import datetime, time
 import sqlite3
@@ -19,7 +19,7 @@ class SingletonDecorator:
 @SingletonDecorator
 class DatabaseManager:
     def __init__(self):
-        self.database = project_paths.data_file('users.db')
+        self.database = project_paths.users
         self.columns = ["id", "usedCount", "usedOnCycle", "isInGroup", "lastTimeUpdated"]
         self.columns_sql = ", ".join(self.columns)
         self.connection = sqlite3.connect(self.database)
@@ -204,11 +204,15 @@ class Paths:
         self.service = os.path.join(self.wd, "service")
         self.data = os.path.join(self.wd, "data")
         self.temp = os.path.join(self.wd, "temp")
+        self.backups = os.path.join(self.service, "backups")
 
         self.check_paths_existence()
 
+        # Constant file paths
+        self.users = self.data_file('users.db')
+
     def check_paths_existence(self):
-        for path_to in [self.service, self.temp]:
+        for path_to in [self.service, self.temp, self.backups]:
             if not os.path.exists(path_to):
                 os.makedirs(path_to)
 
@@ -223,6 +227,9 @@ class Paths:
 
     def temp_file(self, filename):
         return os.path.join(self.temp, filename)
+
+    def backup_file(self, filename):
+        return os.path.join(self.backups, filename)
 
 @SingletonDecorator
 class ServerConfig:
@@ -239,6 +246,35 @@ class ServerConfig:
                     self.is_test = "True" == value
 
 @SingletonDecorator
+class BackupManager:
+    def __init__(self):
+        pass
+
+    def backupfilename(self, filename, mode=None):
+        return '%s.backup' % filename
+
+    def backupfilename_clear(self, filename, mode=None):
+        return filename.replace(".backup", "")
+
+    def make_file_backup(self, filepath, to_dir=None):
+        if to_dir is None:
+            to_dir = project_paths.temp_file
+        filename = ntpath.basename(filepath)
+        output_path = to_dir(self.backupfilename(filename))
+        shutil.copy(filepath, output_path)
+        server_log.add_log("Backup of %s saved to %s" % (filename, output_path))
+
+    def save_temporary_backup(self, filepath):
+        self.make_file_backup(filepath, to_dir=project_paths.temp_file)
+
+    def clear_temporary_backup(self, filepath):
+        filename = ntpath.basename(filepath)
+        backupfilepath = project_paths.temp_file(self.backupfilename(filename))
+        os.remove(backupfilepath)
+
+
+
+@SingletonDecorator
 class TimeManager:
     def time_now(self):
         return int(time.time())
@@ -253,9 +289,11 @@ class TimeManager:
 
 # Singletons init
 project_paths = Paths()
+server_log = ServerLogger()
+
+backups = BackupManager()
 timemanager = TimeManager()
 server_config = ServerConfig()
-server_log = ServerLogger()
 database = DatabaseManager()
 
 @atexit.register
@@ -263,5 +301,6 @@ def close_connection():
     database.connection.close()
 
 if __name__ == "__main__":
-    database.print_database()
+    backups.make_file_backup(project_paths.users, to_dir=project_paths.backup_file)
+    #backups.clear_temporary_backup(project_paths.users)
 

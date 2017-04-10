@@ -16,3 +16,4 @@ server/service/server_logs.txt
 server/__pycache__/
 server/data/users.db
 server/data/userdata/
+server/temp/users.db.backup
