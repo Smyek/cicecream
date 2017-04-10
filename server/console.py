@@ -121,7 +121,7 @@ class SICE_Console:
             try:
                 print(log)
             except UnicodeEncodeError:
-                print(log.encode('cp1251'))
+                print(log.encode('cp1251', errors="replace"))
 
     def print_database(self):
         database.print_database(to_file=False, on_screen=True)
