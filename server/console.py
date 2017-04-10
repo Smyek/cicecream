@@ -14,17 +14,14 @@ class SICE_Console:
     def __init__(self):
         server_log.add_log("Console session: started", logging.info)
 
-        self.commands = {"Print database": self.print_database,
-                         "Convert old system to database": database.convert_old_system_to_database,
-                         "Generate phrase and post to Test": self.generate_phrase_and_post,
-                         "Print 10 last logs": self.print_logs,
-                         "Set -uid attribute usedOnCycle to 0": self.set_usedOnCycle_by_uid,
-                         "Get user info by -uid": self.print_user_info_by_uid,
-                         "Get user by -colname -value": self.print_uids_by_col_value,
-                         }
+        self.commands = [("Exit", self.exit),
+                         ("Generate phrase and post to Test", self.generate_phrase_and_post),
+                         ("> Database options", self.database_list),
+                         ("> Logs options", self.logs_list),
+                         ]
 
-        self.options = ["Exit"] + sorted(self.commands.keys())
-        self.commands["Exit"] = self.exit
+        self.list_template = [("Back", self.back)]
+        self.options_lists = [self.commands]
         self.arguments_buffer = []
         self.main_loop()
 
@@ -34,7 +31,7 @@ class SICE_Console:
             user_input = input("Choose option: ")
             option_id = self.parse_input(user_input)
             if option_id is None: continue
-            output = self.commands[self.options[option_id]]()
+            output = self.options_lists[-1][option_id][1]()
             if output == "EXIT": break
 
     def parse_input(self, user_input):
@@ -43,18 +40,20 @@ class SICE_Console:
         arguments = re.findall("(?:-)([^ ]+)", refined)
         if not option:
             print("ERROR: must be integer.")
+            return None
         else:
             option_id = int(option.group(1))
-            if (option_id > len(self.options)) or (option_id < 0):
+            if (option_id > len(self.options_lists[-1])) or (option_id < 0):
                 print("ERROR: no such option.")
                 return None
         self.arguments_buffer = arguments
         return option_id
 
     def print_options(self):
-        for i in range(1, len(self.options)):
-            print(i, self.options[i])
-        print(0, self.options[0])
+        commands = self.options_lists[-1]
+        for i in range(1, len(commands)):
+            print(i, commands[i][0])
+        print(0, commands[0][0])
 
 
     # AUXILIARY
@@ -71,6 +70,22 @@ class SICE_Console:
         except:
             print('Argument must be integer.')
             return None
+
+
+    # LISTS
+    def database_list(self):
+        options = self.list_template + [("Print database", self.print_database),
+                                        ("Convert old system to database", database.convert_old_system_to_database),
+                                        ("Set -uid attribute usedOnCycle to 0", self.set_usedOnCycle_by_uid),
+                                        ("Get user info by -uid", self.print_user_info_by_uid),
+                                        ("Get user by -colname -value", self.print_uids_by_col_value),
+                                        ]
+        self.options_lists.append(options)
+
+    def logs_list(self):
+        options = self.list_template + [("Print -n last logs (10 by default)", self.print_logs),
+                                        ]
+        self.options_lists.append(options)
 
 
     # COMMANDS
@@ -112,11 +127,11 @@ class SICE_Console:
 
     def print_logs(self, logs_count=10):
         if self.arguments_buffer:
-            if self.arguments_buffer[0] == "all":
+            if self.arguments_buffer[0] == "a":
                 logs_count = 0
             else:
                 try: logs_count = int(self.arguments_buffer[0])
-                except: print('Must be integer or "all". Default count used.')
+                except: print('Must be integer or "-a". Default count used.')
         for log in server_log.get_logs_list()[-logs_count:]:
             try:
                 print(log)
@@ -125,6 +140,9 @@ class SICE_Console:
 
     def print_database(self):
         database.print_database(to_file=False, on_screen=True)
+
+    def back(self):
+        self.options_lists = self.options_lists[:-1]
 
     def exit(self):
         print("Have a nice day.")
