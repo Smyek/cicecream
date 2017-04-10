@@ -1,6 +1,6 @@
 #!/usr/bin/python3.5
 
-import os, shutil, ntpath
+import os, shutil, ntpath, hashlib
 import logging
 import datetime, time
 import sqlite3
@@ -268,6 +268,22 @@ class BackupManager:
         shutil.copy(filepath, output_path)
         server_log.add_log("Backup of %s saved to %s" % (filename, output_path))
 
+    def load_backup(self, filepath, from_dir=None):
+        if from_dir is None:
+            from_dir = project_paths.temp_file
+        backup_filename = self.backupfilename(ntpath.basename(filepath))
+        backup_filepath = from_dir(backup_filename)
+        if os.path.isfile(backup_filepath):
+            if self.md5(backup_filepath) != self.md5(filepath):
+                shutil.copy(backup_filepath, filepath)
+                server_log.add_log("Backup (%s) has been loaded" % backup_filepath, logging.debug)
+            else:
+                print("Files are equal. Loading backup has been aborted")
+        else:
+            message = "No backup file (%s) found" % backup_filepath
+            print(message)
+            server_log.add_log(message, logging.error)
+
     def save_temporary_backup(self, filepath):
         self.make_file_backup(filepath, to_dir=project_paths.temp_file)
 
@@ -275,6 +291,13 @@ class BackupManager:
         filename = ntpath.basename(filepath)
         backupfilepath = project_paths.temp_file(self.backupfilename(filename))
         os.remove(backupfilepath)
+
+    def md5(self, fname):
+        hash_md5 = hashlib.md5()
+        with open(fname, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_md5.update(chunk)
+        return hash_md5.hexdigest()
 
 
 
@@ -305,6 +328,7 @@ def close_connection():
     database.connection.close()
 
 if __name__ == "__main__":
-    backups.make_file_backup(project_paths.users, to_dir=project_paths.backup_file)
+    #backups.make_file_backup(project_paths.users, to_dir=project_paths.backup_file)
     #backups.clear_temporary_backup(project_paths.users)
+    backups.load_backup(project_paths.users)
 

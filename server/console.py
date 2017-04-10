@@ -5,6 +5,8 @@ import atexit
 import re
 from utils import server_log
 from utils import database
+from utils import backups
+from utils import project_paths
 
 @atexit.register
 def close_connection():
@@ -19,6 +21,7 @@ class SICE_Console:
                          ("Generate phrase and post to Test", self.generate_phrase_and_post),
                          ("> Database options", self.database_list),
                          ("> Logs options", self.logs_list),
+                         ("> Backup options", self.backups_list),
                          ]
 
         self.list_template = [("Back", self.back)]
@@ -94,6 +97,11 @@ class SICE_Console:
                                         ]
         self.options_lists.append(options)
 
+    def backups_list(self):
+        options = self.list_template + [("Save users backup manually", self.save_users_backup_to_manual),
+                                        ("Load users backup", self.load_users_backup),
+                                        ]
+        self.options_lists.append(options)
 
     # COMMANDS
     def generate_phrase_and_post(self):
@@ -151,6 +159,18 @@ class SICE_Console:
 
     def print_database(self):
         database.print_database(to_file=False, on_screen=True)
+
+    ## BACKUPS OPTIONS
+
+    def save_users_backup_to_manual(self):
+        if not self.are_you_sure(): return
+        backups.make_file_backup(project_paths.users, project_paths.backup_file)
+
+    def load_users_backup(self):
+        backups.make_file_backup(project_paths.users, project_paths.temp_file)
+        backups.load_backup(project_paths.users, project_paths.backup_file)
+
+    ## other
 
     def back(self):
         self.options_lists = self.options_lists[:-1]
