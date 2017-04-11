@@ -1,6 +1,7 @@
 #!/usr/bin/python3.5
 
 import os, shutil, ntpath, hashlib
+import platform
 import logging
 import datetime, time
 import sqlite3
@@ -258,12 +259,14 @@ class Paths:
 class ServerConfig:
     def __init__(self):
         self.config = None
+        self.meta = {}
         self.is_test = True
         self.load()
 
     def load(self):
         self.config = YamlHandler(project_paths.config)
         self.is_test = self.config.get_alias_value("config.test_mode")
+        self.meta["is_server"] = True if platform.system() == "Linux" else False
 
     def save(self):
         self.config.save_doc()
@@ -275,7 +278,7 @@ class ServerConfig:
         self.config.set_alias_value("config.test_mode", True)
 
     def get_config(self):
-        return self.config.doc
+        return self.config.doc, self.meta
 
 @SingletonDecorator
 class BackupManager:
