@@ -23,6 +23,7 @@ class SICE_Console:
                          ("> Database options", self.database_list),
                          ("> Logs options", self.logs_list),
                          ("> Backup options", self.backups_list),
+                         ("> Config options", self.config_list),
                          ]
 
         self.list_template = [("Back", self.back)]
@@ -114,6 +115,13 @@ class SICE_Console:
                                         ]
         self.options_lists.append(options)
 
+    def config_list(self):
+        options = self.list_template + [("Print config", self.print_config),
+                                        ("Switch to test", self.switch_to_test),
+                                        ("Switch to release", self.switch_to_release),
+                                        ("Save config", self.save_config),
+                                        ]
+        self.options_lists.append(options)
 
     # COMMANDS
     ## DATABASE options
@@ -199,6 +207,24 @@ class SICE_Console:
                 backups.load_backup(project_paths.users, project_paths.temp_file)
         else:
             backups.load_backup(project_paths.users, project_paths.backup_file)
+
+
+    ## CONFIG options
+    def print_config(self):
+        print(server_config.get_config())
+
+    def switch_to_test(self):
+        server_config.set_to_test()
+        server_config.save()
+
+    def switch_to_release(self):
+        if not self.are_you_sure(): return
+        server_config.set_to_release()
+
+    def save_config(self):
+        print(server_config.get_config())
+        if not self.are_you_sure(): return
+        server_config.save()
 
 
     ## other

@@ -259,14 +259,20 @@ class ServerConfig:
     def __init__(self):
         self.config = None
         self.is_test = True
-        self.load_config()
+        self.load()
 
-    def load_config(self):
+    def load(self):
         self.config = YamlHandler(project_paths.config)
         self.is_test = self.config.get_alias_value("config.test_mode")
 
+    def save(self):
+        self.config.save_doc()
+
     def set_to_release(self):
-        self.config.set_alias_value("config.test_mode", "False")
+        self.config.set_alias_value("config.test_mode", False)
+
+    def set_to_test(self):
+        self.config.set_alias_value("config.test_mode", True)
 
     def get_config(self):
         return self.config.doc
@@ -329,6 +335,10 @@ class YamlHandler:
     def load_doc(self):
         with open(self.pth, "r", encoding="utf-8") as f:
             return yaml.load(f)
+
+    def save_doc(self):
+        with open(self.pth, "w", encoding="utf-8") as f:
+            yaml.dump(self.doc, f, default_flow_style=False)
 
     def alias_split(self, alias):
         return alias.split(".")
