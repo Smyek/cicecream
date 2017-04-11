@@ -200,7 +200,7 @@ class SICE_Console:
         server_log.delete_logs()
 
 
-    ## BACKUPS OPTIONS
+    ## BACKUPS options
     def save_users_backup_to_manual(self):
         if not self.are_you_sure(): return
         backups.make_file_backup(project_paths.users, project_paths.backup_file)
