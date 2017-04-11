@@ -260,12 +260,13 @@ class ServerConfig:
     def __init__(self):
         self.config = None
         self.meta = {}
-        self.is_test = True
         self.load()
+
+    def is_test(self):
+        return self.config.get_alias_value("config.test_mode")
 
     def load(self):
         self.config = YamlHandler(project_paths.config)
-        self.is_test = self.config.get_alias_value("config.test_mode")
         self.meta["is_server"] = True if platform.system() == "Linux" else False
 
     def save(self):

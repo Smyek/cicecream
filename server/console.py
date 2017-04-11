@@ -84,7 +84,7 @@ class SICE_Console:
         return False
 
     def post_mode(self):
-        if server_config.is_test:
+        if server_config.is_test():
             return "Test"
         else:
             return "Release"
