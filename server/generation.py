@@ -28,7 +28,7 @@ class VKManager:
     # post vk via smorozhenoe group
     def post_message(self, message_text):
         group_id = "-92940311"
-        if server_config.is_test:
+        if server_config.is_test():
             group_id = "-125307022"
         self.vk.get(method="wall.post", message=message_text, owner_id=group_id)
 
