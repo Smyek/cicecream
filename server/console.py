@@ -19,7 +19,7 @@ class SICE_Console:
         #server_log.add_log("Console session: started", logging.info)
 
         self.commands = [("Exit", self.exit),
-                         ("Generate phrase and post to %s" % self.post_mode().upper(), self.generate_phrase_and_post),
+                         ("Generate phrase and post", self.generate_phrase_and_post),
                          ("> Database options", self.database_list),
                          ("> Logs options", self.logs_list),
                          ("> Backup options", self.backups_list),
@@ -33,6 +33,7 @@ class SICE_Console:
 
     def main_loop(self):
         while True:
+            self.print_header()
             self.print_options()
             user_input = input("Choose option: ")
             option_id = self.parse_input(user_input)
@@ -117,7 +118,7 @@ class SICE_Console:
 
     def config_list(self):
         options = self.list_template + [("Print config", self.print_config),
-                                        ("Switch to test", self.switch_to_test),
+                                        ("Switch to test (-s to save after)", self.switch_to_test),
                                         ("Switch to release", self.switch_to_release),
                                         ("Save config", self.save_config),
                                         ]
@@ -176,6 +177,9 @@ class SICE_Console:
     def print_database(self):
         database.print_database(to_file=False, on_screen=True)
 
+    def print_header(self):
+        server_config.is_test()
+        print("\nVer. %s: %s" % (server_config.version(), self.post_mode().upper()))
 
     ## LOGS options
     def print_logs(self, logs_count=10):
@@ -215,7 +219,9 @@ class SICE_Console:
 
     def switch_to_test(self):
         server_config.set_to_test()
-        server_config.save()
+        if self.arguments_buffer:
+            if self.arguments_buffer[0] == "s":
+                server_config.save()
 
     def switch_to_release(self):
         if not self.are_you_sure(): return

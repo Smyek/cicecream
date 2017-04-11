@@ -278,6 +278,9 @@ class ServerConfig:
     def set_to_test(self):
         self.config.set_alias_value("config.test_mode", True)
 
+    def version(self):
+        return self.config.get_alias_value("config.ver")
+
     def get_config(self):
         return self.config.doc, self.meta
 
