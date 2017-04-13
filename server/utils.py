@@ -116,7 +116,8 @@ class DatabaseManager:
     def run_sql(self, sql_command):
         result = self.cursor.execute(sql_command)
         if result:
-            print(result)
+            result = result.fetchall()
+            print(len(result), result)
         self.connection.commit()
         server_log.add_log("SQL query executed: %s" % sql_command)
 
