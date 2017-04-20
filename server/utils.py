@@ -74,11 +74,21 @@ class DatabaseManager:
         if new_users:
             server_log.add_log('New users: %s' % ", ".join(list(map(str,new_users))), logging.info)
 
+    def comeback_users_check(self, group_uids):
+        for uid in group_uids:
+            result = self.cursor.execute("SELECT * FROM users WHERE id = %s AND isInGroup = 0" % uid).fetchall()
+            if result:
+                self.cursor.execute("UPDATE users SET isInGroup = 1 WHERE id = %s" % uid)
+                server_log.add_log('User came back: %s' % uid, logging.info)
+
+
     def users_not_in_group_check(self, group_uids):
-        for row in self.cursor.execute("SELECT id FROM users"):
+        for row in self.cursor.execute("SELECT id FROM users WHERE isInGroup = 1").fetchall():
             uid = row[0]
             if uid not in group_uids:
                 self.cursor.execute("UPDATE users SET isInGroup = 0 WHERE id = %s" % uid)
+                server_log.add_log('User left the group: %s' % uid, logging.info)
+
 
     def all_usedOnCycle_check(self):
         result = self.cursor.execute("SELECT id FROM users WHERE usedOnCycle = 0 AND isInGroup = 1").fetchall()
@@ -89,6 +99,7 @@ class DatabaseManager:
     # used by UserManager
     def update_users(self, group_uids):
         self.new_users_check(group_uids)
+        self.comeback_users_check(group_uids)
         self.users_not_in_group_check(group_uids)
         self.all_usedOnCycle_check()
         self.connection.commit()
@@ -207,7 +218,7 @@ class ServerLogger:
     def delete_logs(self):
         with open(self.server_logs_path, "w", encoding="utf-8") as f:
             f.write("")
-        server_log.add_log("Logs were cleaned")
+        self.add_log("Logs were cleaned")
 
     def add_log(self, message, level_function=logging.debug):
         if isinstance(message, tuple):
