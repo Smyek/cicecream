@@ -1534,7 +1534,6 @@ V,intr=inpraes,pl,indic,3p,ipf_+_S,f,inan=(acc,sg|nom,sg)_+_<username>[S,,,patrn
 <username>[S,,,,,f,,,anim,=,nom,,,sg]_+_A=nom,sg,plen,f_+_,_+_A=nom,sg,plen,f_+_S,f,anim=nom,sg_+_...
 <username>[S,,,,,m,,,anim,=,nom,,,sg]_+_V,intr=praet,sg,indic,m,pf_+_,_+_V,tran=praet,ger,pf_+_и_+_мою_+_A=acc,sg,plen,f_+_S,f,inan=acc,sg_+_.
 <username>[S,,,,,mf,,,anim,=,nom,,,sg]_+_,_+_SPRO,sg,1p=nom_+_SPRO,sg,2p=(acc|gen)_+_не_+_очень_+_V=inpraes,sg,indic,1p,ipf,tran_+_?
-<username>[S,,,f,,,inan,=,nom,,,sg]_+_S,f,inan=(acc,pl|gen,sg|nom,pl)_+_(_+_S,n,inan=(acc,sg|nom,sg)_+_)</_+_h2_+_></_+_>    ----------------------------------------------------------------------------_+_._+_._+_S,m,anim=nom,sg_+_.
 <username>[S,,,m,,,anim,=,nom,,,sg]_+_,_+_V,tran=(praet,acc,sg,partcp,plen,m,pf,act,inan|praet,nom,sg,partcp,plen,m,pf,act)_+_V,pf,intr=inf_+_в_+_S,f,inan=(abl,sg|acc,pl|dat,sg|gen,sg|nom,pl)_+_S,m,anim=(acc,pl|gen,pl)_+_,_+_V,pf,intr=praet,sg,indic,m_+_.
 Едва_+_<username>[S,,,m,,,anim,=,nom,,,sg]_+_V,intr=praet,sg,indic,m,pf_+_,_+_как_+_S,n,inan=(acc,sg|nom,sg)_+_V,intr=praet,sg,indic,n,pf_+_,_+_V=inpraes,ger,ipf,tran_+_SPRO,sg,1p=(acc|gen)_+_.
 V,pf,intr=praet,sg,indic,m_+_"_+_<username>[S,,,m,,,anim,=,nom,,,sg]_+_",_+_SPRO,sg,n,inan=gen_+_V,pf,tran=inf_+_!
@@ -6212,7 +6211,6 @@ SPRO,pl,1p=nom_+_V,tran=(inpraes,pl,indic,1p,ipf|inpraes,sg,partcp,brev,m,ipf,pa
 V,pf,tran=praet,sg,indic,m_+_<username>[S,,,m,,,anim,=,nom,,,sg]_+_,_+_отважно_+_V,intr=inpraes,ger,ipf_+_по_+_S,f,inan=dat,pl_+_.
 V,ipf,tran=inpraes,sg,indic,2p_+_ли_+_,_+_что_+_<username>[S,,,m,,,anim,=,nom,,,sg]_+_твой_+_S,m,anim=nom,sg_+_?
 <username>[S,,,f,,,anim,=,nom,,,sg]_+_S,f,inan=nom,sg_+_V,tran=praet,sg,indic,f,ipf_+_V,ipf,tran=inf_+_в_+_S,f,inan=abl,pl_+_V,ipf,intr=(inpraes,nom,pl,partcp,plen,act|inpraes,acc,pl,partcp,plen,act,inan)_+_S,f,inan=(acc,pl|gen,sg|nom,pl)_+_S,n,inan=(acc,pl|gen,sg|nom,pl)_+_S,m,inan=ins,sg_+_.
-В_+_S,m,inan=abl,sg_+_</_+_h2_+_></_+_>  ----------------------------------------------------------------------------_+_._+_._+_<username>[S,,,,,m,,,anim,=,nom,,,sg]_+_.
 -_+_Какие_+_S,m,anim=nom,pl_+_!_+_-_+_V,ipf,tran=praet,sg,indic,m_+_<username>[S,,,m,,,anim,=,nom,,,sg]_+_вполголоса_+_,_+_V,ipf,intr=inpraes,ger_+_сзади_+_.
 Ну_+_,_+_<username>[S,,,,,m,,,anim,=,nom,,,sg]_+_,_+_V,intr=inpraes,sg,indic,2p_+_SPRO,sg,2p=nom_+_за_+_SPRO,sg,1p=(acc|gen)_+_S,m,anim=dat,sg_+_V,intr=inf,ipf_+_!
 Ну_+_A=nom,sg,plen,f_+_,_+_ну_+_,_+_S,m,anim=(acc,sg|gen,sg)_+_!_+_--_+_V,ipf,intr=praet,sg,indic,f_+_<username>[S,,,f,,,anim,=,nom,,,sg]_+_.
@@ -6625,7 +6623,6 @@ V,ipf,intr=inpraes,sg,indic,3p_+_такой_+_<username>[S,,,m,,,anim,=,nom,,,sg
 Ну_+_,_+_SPRO,sg,n,inan=(acc|nom)_+_же_+_<username>[SPRO,,,sg,,,3p,,,m,=,nom]_+_,_+_S,m,anim=nom,sg_+_?
 V,tran=sg,imper,2p,pf_+_S,m,inan=(acc,sg|nom,sg)_+_, -_+_V,ipf,intr=inpraes,sg,indic,3p_+_<username>[S,,,,,f,,,anim,=,nom,,,sg]_+_.
 <username>[SPRO,,,sg,,,2p,=,nom]_+_у_+_SPRO,sg,1p=(acc|gen)_+_V,tran=inpraes,sg,indic,2p,pf_+_!_+_-_+_V,ipf,tran=praet,sg,indic,m_+_S,mf,anim=nom,sg_+_,_+_не_+_V,ipf,intr=inpraes,ger_+_.
-V,intr=inpraes,sg,indic,3p_+_,_+_<username>[S,,,m,,,anim,=,nom,,,sg]_+_...        -------------------------------------------------------------------------------_+_-_+_1
 Видно_+_,_+_<username>[S,,,,,f,,,anim,=,nom,,,sg]_+_еще_+_не_+_V,intr=praet,sg,indic,f,ipf_+_.
 S,n,inan=(acc,pl|gen,sg|nom,pl)_+_в_+_S,m,inan=abl,sg_+_<username>[S,,,f,,,anim,=,nom,,,sg]_+_V,intr=praet,pl,indic,ipf_+_V=praet,pl,partcp,brev,pf,pass_+_.
 V,ipf,intr=inpraes,pl,indic,3p_+_,_+_а_+_<username>[SPRO,,,sg,,,2p,=,nom]_+_S,pl,inan=(acc|nom)_+_-_+_S,pl,inan=(acc|nom)_+_как_+_S,f,anim=nom,sg_+_.
@@ -7581,7 +7578,6 @@ S,n,inan=(acc,sg|nom,sg)_+_,_+_что_+_<username>[S,,,f,,,anim,=,nom,,,sg]_+_,_
 Сегодня_+_<username>[S,,,m,,,anim,=,nom,,,sg]_+_S,m,anim=nom,sg_+_S,m,anim=nom,sg_+_,_+_и_+_неловко_+_как-то_+_не_+_V,pf,intr=inf_+_...
 <username>[S,,,,,f,,,anim,=,nom,,,sg]_+_не_+_V,tran=praet,sg,indic,f,pf_+_,_+_тоже_+_V,intr=praet,sg,indic,f,pf_+_из-за_+_S,m,inan=gen,sg_+_.
 И_+_<username>[S,,,,,m,,,anim,=,nom,,,sg]_+_V,intr=praet,sg,indic,m,pf_+_без_+_S,n,inan=(acc,pl|gen,sg|nom,pl)_+_.
-<username>[S,,,m,,,anim,=,nom,,,sg]_+_из_+_S,geo,sg,m,inan=(abl|acc|dat|gen|ins|nom)_+_</_+_h2_+_></_+_>  ----------------------------------------------------------------------------_+_._+_._+_S,m,anim=nom,sg_+_.
 У_+_SPRO,sg,1p=(acc|gen)_+_сегодня_+_S,n,inan=(acc,pl|gen,sg|nom,pl)_+_,  --_+_V,pf,tran=praet,sg,indic,m_+_<username>[S,,,,,m,,,anim,=,nom,,,sg]_+_.
 <username>[SPRO,,,sg,,,2p,=,nom]_+_что_+_,_+_S,sg,n,inan=(abl|acc|nom)_+_?_+_--_+_V=praet,sg,indic,m,pf_+_S,m,anim=nom,sg_+_.
 V,pf,tran=sg,imper,2p_+_S,voc,sg,m,anim=_+_от_+_таких_+_S,m,anim=(acc,pl|gen,pl)_+_!_+_-_+_A=sg,brev,n_+_,_+_A=sg,brev,n_+_V,intr=praet,sg,indic,m,pf_+_<username>[S,,,,,m,,,anim,=,nom,,,sg]_+_.
@@ -8682,7 +8678,6 @@ V,ipf,intr=inpraes,sg,indic,1p_+_,_+_SPRO,pl=nom_+_V,ipf,intr=inpraes,pl,indic,3
 <username>[S,,,m,,,anim,=,nom,,,sg]_+_S,m,anim=nom,sg_+_V,intr=inpraes,sg,indic,3p,ipf_+_на_+_S,m,inan=(acc,pl|nom,pl)_+_S,f,inan=(acc,pl|gen,sg|nom,pl)_+_.
 -_+_Странно_+_,_+_A=sg,brev,n_+_..._+_-_+_V,pf,tran=praet,sg,indic,m_+_<username>[S,,,,,m,,,anim,=,nom,,,sg]_+_,_+_и_+_при_+_S,n,inan=abl,sg_+_об
 Да_+_во_+_SPRO,pl=dat_+_,_+_мой_+_<username>[S,,,m,,,anim,=,nom,,,sg]_+_!
-<username>[S,,,f,,,anim,=,nom,,,sg]_+_</_+_h2_+_></_+_>    ----------------------------------------------------------------------------_+_._+_._+_S,m,anim=nom,sg_+_.
 V,ipf,tran=inf_+_V,intr=inpraes,pl,indic,2p_+_SPRO,pl,2p=nom_+_,_+_<username>[S,,,,,mf,,,anim,=,nom,,,sg]_+_!
 V,tran=sg,imper,2p,pf_+_,_+_не_+_V,ipf,tran=praet,sg,indic,m_+_V=inf,pf_+_, -_+_искренне_+_V,ipf,tran=inpraes,sg,indic,3p_+_<username>[S,,,,,m,,,anim,=,nom,,,sg]_+_.
 A=nom,sg,plen,f_+_<username>[S,,,f,,,inan,=,nom,,,sg]_+_-_+_S,m,anim=nom,sg_+_.
@@ -9884,7 +9879,6 @@ S,m,inan=(acc,sg|nom,sg)_+_!_+_-_+_V,pf,intr=praet,sg,indic,m_+_<username>[S,,,,
 За_+_SPRO,sg,3p,m=ins_+_следом_+_V,intr=praet,sg,indic,m,pf_+_и_+_<username>[S,,,,,m,,,anim,=,nom,,,sg]_+_.
 <username>[S,,,,,m,,,anim,=,nom,,,sg]_+_V,tran=praet,sg,indic,m,pf_+_S,m,inan=(acc,pl|nom,pl)_+_и_+_V,ipf,intr=praet,sg,indic,m_+_.
 S,n,inan=(acc,pl|nom,pl)_+_V,ipf,intr=inpraes,pl,indic,3p_+_,_+_<username>[S,,,m,,,anim,=,nom,,,sg]_+_V,ipf,intr=inpraes,sg,indic,3p_+_.
-NUM=(acc,m,inan|nom,m|acc,n|nom,n)_+_S,m,inan=gen,sg_+_</_+_h2_+_></_+_>    ----------------------------------------------------------------------------_+_._+_._+_<username>[S,,,,,m,,,anim,=,nom,,,sg]_+_.
 SPRO,sg,n,inan=(acc|nom)_+_,_+_что_+_<username>[SPRO,,,sg,,,2p,=,nom]_+_V,ipf,tran=inpraes,sg,indic,2p_+_,_+_S,m,anim=nom,sg_+_,_+_это_+_лишь_+_S,f,inan=(acc,pl|gen,sg|nom,pl)_+_..._+_S,m,inan=(acc,pl|nom,pl)_+_.
 <username>[S,,,m,,,anim,=,nom,,,sg]_+_S,m,anim=nom,sg_+_,_+_V,pf,tran=praet,ger_+_такое_+_S,n,inan=(acc,sg|nom,sg)_+_S,f,inan=gen,pl_+_,_+_V,intr=praet,sg,indic,m,pf_+_V,pf,intr=inf_+_и_+_V,pf,intr=inf_+_.
 Но_+_<username>[S,,,,,m,,,anim,=,nom,,,sg]_+_любую_+_S,f,inan=acc,sg_+_V=inpraes,sg,indic,3p,ipf,tran_+_всерьез_+_.
