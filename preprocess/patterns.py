@@ -1,11 +1,13 @@
 from collections import defaultdict, Counter
 import random
-import re
+import copy
 
 from sttk import TextHandlerUnit
 from sttk import tf_lex, SF_Safe_Russian_NoDlg
 from sttk import tf_default
 from sttk import TokenMarkers, TokenType
+
+from sttk import Sentence
 
 from corpusmanager import corpus_manager
 
@@ -101,35 +103,43 @@ class PatternGenerator:
         return history[1:]
 
     def refine(self, sentence):
-        result = []
+        result = Sentence()
         s_len = len(sentence)
         should_upper_first = True
         for i in range(s_len):
             token = sentence[i]
-            current_token_obj = self.lm.thu.token_dictionary[token]
+            current_token_obj = self.get_tok_obj(token, to_copy=True)
             # upper first char
             if should_upper_first:
-                token = token[0].upper() + token[1:]
+                current_token_obj.first_upper()
                 should_upper_first = False
-            result.append(token)
+            result.add(current_token_obj)
             #add space if it's eos
-            if current_token_obj.markers[TokenMarkers.is_eos]:
-                result.append(" ")
+            if current_token_obj.markers[TokenMarkers.is_eos] and (i != s_len-1):
+                result.add(self.get_tok_obj(" "))
                 should_upper_first = True
             #add regular space
             if (i < s_len - 1):
-                next_token_obj = self.lm.thu.token_dictionary[sentence[i+1]]
+                next_token_obj = self.get_tok_obj(sentence[i+1])
                 if next_token_obj.toktype in [TokenType.word, TokenType.word_fixed] and \
                                 current_token_obj.toktype in [TokenType.word, TokenType.word_fixed]:
-                    result.append(" ")
-
-        result = "".join(result)
-        #result = result[0].upper() + result[1:]
+                    result.add(self.get_tok_obj(" "))
+        result.calculate_meta()
         return result
+
+    # auxiliary
+    def get_tok_obj(self, tok_text, to_copy=False):
+        tok = self.lm.thu.token_dictionary[tok_text]
+        if to_copy:
+            tok = copy.copy(tok)
+        return tok
 
 
 LM = LanguageModel()
 generator = PatternGenerator(LM)
-for i in range(30):
-    result = generator.generate(15)
-    print(generator.refine(result))
+for i in range(100):
+    result = generator.generate(10)
+    result = generator.refine(result)
+    print(result.str)
+    print(result.markers)
+
