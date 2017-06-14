@@ -1,155 +1,135 @@
-from corpusmanager import CorpusManager
-from text_refiner import TxtRefiner
-from logger import Log
-import subprocess, json, operator, random, shutil, re, os
-from pprint import pformat
-from collections import Counter, defaultdict
+from collections import defaultdict, Counter
+import random
+import re
 
-class DataManager:
-    def __init__(self, process_all_corpus=False, mystem_all=False, refine_all=False):
-        #params
-        self.process_all = process_all_corpus
-        self.mystem_all = mystem_all
-        self.refine_all = refine_all
+from sttk import TextHandlerUnit
+from sttk import tf_lex, SF_Safe_Russian_NoDlg
+from sttk import tf_default
+from sttk import TokenMarkers, TokenType
 
-        #paths
-        self._data_path = 'data\\'
-        self._mystem_output_folder_path = self._data_path + "mystem_output\\"
-        self.exceptions_path = self._data_path + 'exceptions.txt'
-        self.mystem_path = self._data_path + 'mystem'
-        #self.mystem_input_path = self._data_path + 'input.txt'
-        self.mystem_output_path = self._mystem_output_folder_path + '%s_mystem.json'
-        self.refined_folder_path = self._data_path + "refined_texts\\"
-        self.refined_text_path = self.refined_folder_path + '%s_ref.txt'
+from corpusmanager import corpus_manager
 
-        #data
-        self.exceptions = []
 
-        #init
-        self.log = Log("generator")
-        self.corpus = CorpusManager()
-        self.refiner = TxtRefiner()
-        self.load_exceptions()
-        self.prepare_documents()
-        self.log.close_filestream()
+def normalize_counter(counter):
+    sum = 0
+    percentage = []
+    for (key, value) in counter.items(): sum += value
+    for (key, value) in counter.items():
+        percentage.append((key, value / (float(sum))))
+    return percentage
 
-    def load_exceptions(self):
-        with open(self.exceptions_path, "r", encoding="utf-8") as f:
-            for line in f:
-                self.exceptions.append(line.strip())
+def weighted_choice(choices):
+    total = sum(w for c, w in choices)
+    r = random.uniform(0, total)
+    upto = 0
+    for c, w in choices:
+        if upto + w >= r:
+            return c
+        upto += w
+    assert False, "Shouldn't get here"
 
-    def initiate_mystem(self, document):
-        input_path = self.refined_text_path % document.name
-        output_path = self.mystem_output_path % document.name
-        if os.path.isfile(output_path) and not self.mystem_all: return
-        command = u"%s -c -s -d --eng-gr --format json < %s > %s" % (self.mystem_path, input_path, output_path)
-        print(command)
-        self.log.write(command)
-        command = command.split()
-        proc = subprocess.call(command, shell=True)
-        self.log.write(pformat(proc))
+class SF_Pure_Russian(SF_Safe_Russian_NoDlg):
+    def __init__(self):
+        SF_Safe_Russian_NoDlg.__init__(self)
+        self.id = "pure_russian"
 
-    def refine_text(self, document):
-        output_path = self.refined_text_path % document.name
-        if os.path.isfile(output_path) and not self.refine_all: return
-        with open(document.doc_path, "r", encoding="utf-8") as docfile:
-            text = docfile.read()
-        text = self.refiner.refine_text(text)
-        with open(output_path, "w", encoding="utf-8") as docfile_refined:
-            docfile_refined.write(text)
+    def pass_condition(self, sentence):
+        if not super(SF_Pure_Russian, self).pass_condition(sentence):
+            return False
+        if sentence.all_words_count < 2:
+            return False
+        return True
 
-    def prepare_documents(self):
-        for document in self.corpus.iterate_documents(self.process_all):
-            #shutil.copy2(document.doc_path, self.mystem_input_path)
-            self.refine_text(document)
-            self.initiate_mystem(document)
+
+class LanguageModel:
+    def __init__(self):
+        self.tokfilter = tf_default
+        self.max_ngram_len = 8
+
+        self.thu = self.load_thu()
+        self.lmd = defaultdict(Counter)
+        print(self.thu.sentencefilter)
+        self.process_corpus()
+
+    def load_thu(self):
+        if True:
+            thu = TextHandlerUnit()
+            thu.max_ngram_len = self.max_ngram_len
+            thu.tokenfilters = [self.tokfilter]
+            thu.sentencefilter = SF_Pure_Russian()
+        return thu
+
+    def process_corpus(self):
+        for doc in corpus_manager:
+            if not doc.processed:
+                self.thu.process(doc.get_text())
+                self.thu.make_ngram_vocabularies()
+        self.make_model()
+
+    def make_model(self):
+        for ngram_len in range(2, self.max_ngram_len+1):
+            ngram_voc = self.thu.NGR_VOCABULARIES[self.tokfilter.id][ngram_len]
+            for ngram, frequency in ngram_voc.items():
+                history, target = ngram[:-1], ngram[-1]
+                self.lmd[history][target] += frequency
+        for history in self.lmd:
+            self.lmd[history] = normalize_counter(self.lmd[history])
+            #print(history, self.lmd[history])
+
 
 class PatternGenerator:
-    def __init__(self):
-        process_all_corpus = False
-        mystem_all = False
-        refine_all = True
-        self.dm = DataManager(process_all_corpus, mystem_all, refine_all)
+    def __init__(self, lm):
+        self.lm = lm
 
-        self.sentences =[]
-        self.gram = {}
-   #true, if a word is an exception
-    def word_exceptions(self, lex, gram):
-        if lex in self.dm.exceptions:
-            # print lex, gram
-            return True
-        if (u"abbr" in gram) or (u"obsc" in gram) or (u"inform" in gram) or (u"rare" in gram):
-            #print lex, gram
-            return True
-        if u"#" in lex: return True
-        return False
+    def generate(self, length=10):
+        history = ["."]
+        should_end = False
+        while not should_end:
+            for ngram_len in range(self.lm.max_ngram_len-1, 0, -1):
+                if ngram_len > len(history):
+                    continue
+                ngram = tuple(history[-ngram_len:])
+                if ngram not in self.lm.lmd:
+                    continue
+                else:
+                    choice = weighted_choice(self.lm.lmd[ngram])
+                    history.append(choice)
+                    if (len(history) > length - 1):
+                        if self.lm.thu.token_dictionary[choice].markers[TokenMarkers.is_eos]:
+                            should_end = True
+                            break
+        return history[1:]
 
+    def refine(self, sentence):
+        result = []
+        s_len = len(sentence)
+        should_upper_first = True
+        for i in range(s_len):
+            token = sentence[i]
+            current_token_obj = self.lm.thu.token_dictionary[token]
+            # upper first char
+            if should_upper_first:
+                token = token[0].upper() + token[1:]
+                should_upper_first = False
+            result.append(token)
+            #add space if it's eos
+            if current_token_obj.markers[TokenMarkers.is_eos]:
+                result.append(" ")
+                should_upper_first = True
+            #add regular space
+            if (i < s_len - 1):
+                next_token_obj = self.lm.thu.token_dictionary[sentence[i+1]]
+                if next_token_obj.toktype in [TokenType.word, TokenType.word_fixed] and \
+                                current_token_obj.toktype in [TokenType.word, TokenType.word_fixed]:
+                    result.append(" ")
 
-    #возвращает true, если записываем гр. разбор а не слово
-    def gram_check(self, gram):
-        if self.reGram.split(gram[:6])[0] in [u"S", u"A", u"V", u"ANUM", u"NUM", u"SPRO"]:
-            return True
-        return False
-
-    def process_mystem_entry(self, entry):
-        if "analysis" in entry:
-            if entry["analysis"] == []: return
-            gram = entry["analysis"][0]['gr']
-            if self.word_exceptions(entry["analysis"][0]['lex'], gram): return
-            if self.gram_check(gram):
-                self.gram_process(entry["text"].lower(), gram)
-                self.mystem[-1].append(gram) #добавляем в последний список разбор
-            else:
-                self.gram_process(entry["text"].strip(), entry["text"].strip())
-                self.mystem[-1].append(entry['text'].strip())
-        else:
-            if entry['text'] in [u"\s", "\n"]:
-                self.accept_sentence()
-                self.username_include()
-                self.modify_sentence()
-                self.mystem.append([])
-            elif (entry['text'] == u" "): return
-            else:
-                self.gram_process(entry["text"].strip(), entry["text"].strip())
-                self.mystem[-1].append(entry['text'].strip())
-
-    def split_msjson_on_sentences(self, mystem_json):
-        sentence = []
-        for entry in mystem_json:
-            if entry['text'] == '\\s':
-                self.sentences.append(sentence)
-                sentence = []
-            else:
-                sentence.append(entry)
-
-    def walk_sentences(self):
-        for key in self.sentences:
-            print(key)
-            self.process_mystem_entry(key)
-
-    def count_mystem_grams(self, mystem_path):
-        with open(mystem_path, "r", encoding="utf-8") as f:
-            mystem_content = f.read().strip()
-            self.split_msjson_on_sentences(json.loads(mystem_content))
-        self.walk_sentences()
-
-    def process_documents(self):
-        for document in self.dm.corpus.iterate_documents(self.dm.process_all):
-            print("Processing %s..." % document.name)
-            mystem_path = self.dm.mystem_output_path % document.name
-            self.count_mystem_grams(mystem_path)
+        result = "".join(result)
+        #result = result[0].upper() + result[1:]
+        return result
 
 
-    # def update_dataset(self, hard_reset=False, files_=False):
-    #     if not hard_reset:
-    #         pass
-    #         # self.load_patterns()
-    #         # self.load_words()
-    #     if files_:
-    #         return self.process_documents()
-
-
-if __name__ == "__main__":
-    pg = PatternGenerator()
-    pg.process_documents()
-    #pg.update_dataset(hard_reset=True)
+LM = LanguageModel()
+generator = PatternGenerator(LM)
+for i in range(30):
+    result = generator.generate(15)
+    print(generator.refine(result))
