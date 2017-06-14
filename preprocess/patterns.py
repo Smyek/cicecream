@@ -83,6 +83,8 @@ class PatternGenerator:
     def __init__(self, lm):
         self.lm = lm
 
+        self.placeholder = "<usr,{},{}|{}>"
+
     def generate(self, length=10):
         history = ["."]
         should_end = False
@@ -116,16 +118,36 @@ class PatternGenerator:
             result.add(current_token_obj)
             #add space if it's eos
             if current_token_obj.markers[TokenMarkers.is_eos] and (i != s_len-1):
-                result.add(self.get_tok_obj(" "))
+                result.add(self.space_tok())
                 should_upper_first = True
             #add regular space
             if (i < s_len - 1):
                 next_token_obj = self.get_tok_obj(sentence[i+1])
                 if next_token_obj.toktype in [TokenType.word, TokenType.word_fixed] and \
                                 current_token_obj.toktype in [TokenType.word, TokenType.word_fixed]:
-                    result.add(self.get_tok_obj(" "))
+                    result.add(self.space_tok())
         result.calculate_meta()
         return result
+
+    # placeholdering
+    def create_placeholders(self, sentence):
+        s_len = len(sentence.tokens)
+        for i in range(s_len):
+            token = sentence.tokens[i]
+            if self.is_replaceable(token):
+                self.change_to_placeholder(token)
+
+    def is_replaceable(self, token):
+        if token.toktype != TokenType.word:
+            return
+        if token.gr == "SPRO,sg,3p,m=nom":
+            return True
+        return False
+
+    def change_to_placeholder(self, token):
+        sex = "m"
+        case = "nom"
+        token.text = self.placeholder.format(sex, case, token.text)
 
     # auxiliary
     def get_tok_obj(self, tok_text, to_copy=False):
@@ -134,12 +156,17 @@ class PatternGenerator:
             tok = copy.copy(tok)
         return tok
 
+    def space_tok(self):
+        return self.get_tok_obj(" ")
+
 
 LM = LanguageModel()
 generator = PatternGenerator(LM)
 for i in range(100):
     result = generator.generate(10)
     result = generator.refine(result)
-    print(result.str)
-    print(result.markers)
+    generator.create_placeholders(result)
+    print(result.get_str())
+    # for tok in result.tokens:
+    #     print(tok, tok.get_info())
 
