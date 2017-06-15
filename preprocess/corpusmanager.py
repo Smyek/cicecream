@@ -1,5 +1,6 @@
 from os import listdir, rename
 from collections import OrderedDict
+import os
 from sttk import TextHandlerUnit
 import yaml
 import dill as pickle
@@ -8,17 +9,23 @@ class Document:
     def __init__(self, name, doc_path):
         self.name = name
         self.doc_path = doc_path
-        self.processed = False
+        self.dump_path = 'data/corpus_processed/' + name + ".pkl"
+        self.processed = os.path.isfile(self.dump_path)
 
     def get_text(self):
         with open(self.doc_path, "r", encoding="utf-8") as f:
             return f.read()
 
-    def save(self):
-        thu = 0
-        with open("dump.pkl", 'wb') as output:
-            pickle.dump(thu, output)
+    def save(self, thu):
+        dump_dictionary = {"ngr": thu.NGR_VOCABULARIES, "tokdic": thu.token_dictionary}
+        with open(self.dump_path, 'wb') as output:
+            pickle.dump(dump_dictionary, output)
 
+    def get_dump(self):
+        print("getting dump {}".format(self.dump_path))
+        with open(self.dump_path, 'rb') as dmp:
+            dmp_obj = pickle.load(dmp)
+        return dmp_obj
 
 class CorpusManager:
     def __init__(self):
@@ -68,5 +75,3 @@ if __name__ == "__main__":
     doc = corpus_manager[list(corpus_manager.documents.keys())[0]]
     thu = TextHandlerUnit()
     thu.process(doc.get_text())
-    for i, s in thu.iterate_sentences():
-        print(s.get_sentence_string())
