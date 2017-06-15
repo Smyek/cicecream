@@ -1,4 +1,5 @@
 from collections import defaultdict, Counter
+from enum import  Enum
 import random
 import copy
 import dill as pickle
@@ -9,11 +10,24 @@ from sttk import tf_default
 from sttk import TokenMarkers, TokenType
 from sttk import POS, Gender, Number, Case, Other, HumanName
 
-from sttk import Sentence
+from sttk import Sentence, SentenceMarkers
 
 from corpusmanager import corpus_manager
 
 lm_dump = "LM_sicecream.pkl"
+
+class SentenceCounters(Enum):
+    placeholder = 1
+    m_placeholder = 2
+    f_placeholder = 3
+
+class SentenceType(Enum):
+    good = 1
+    bad = 2
+    filler = 3
+
+marker_to_SentCounter = {Gender.m: SentenceCounters.m_placeholder,
+                         Gender.f: SentenceCounters.f_placeholder}
 
 def normalize_counter(counter):
     sum = 0
@@ -48,20 +62,20 @@ class SF_Pure_Russian(SF_Safe_Russian_NoDlg):
 
 class LanguageModel:
     def __init__(self, lm_dump_name=None):
-        if lm_dump_name is None:
-            self.tokfilter = tf_default
-            self.max_ngram_len = 8
-            self.lmd = defaultdict(Counter)
+        self.tokfilter = tf_default
+        self.max_ngram_len = 8
+        self.lmd = defaultdict(Counter)
 
-            self.NGR_VOCABULARIES = None
-            self.token_dictionary = None
+        self.NGR_VOCABULARIES = None
+        self.token_dictionary = None
 
+        if not lm_dump_name:
             self.process_corpus()
         else:
             print("LM dump loading..")
-            dmp = self.get_dump(lm_dump_name)
-            #self.__dict__.update(dmp.__dict__)
-
+            lm_dump = self.get_dump(lm_dump_name)
+            self.lmd = lm_dump["lmd"]
+            self.token_dictionary = lm_dump["token_dictionary"]
             print("LM dump loaded.")
 
     def load_thu(self):
@@ -98,8 +112,8 @@ class LanguageModel:
             #print(history, self.lmd[history])
 
     def save_model(self, fname=lm_dump):
-        with open(fname, 'wb') as output:
-            pickle.dump(self, output)
+        lmd_dump = {"lmd": self.lmd, "token_dictionary": self.token_dictionary}
+        self.save_obj(fname, lmd_dump)
 
     def save_obj(self, fname, obj_to_save):
         with open(fname, 'wb') as output:
@@ -230,7 +244,8 @@ class PatternGenerator:
         for i in range(s_len):
             token = sentence.tokens[i]
             if self.is_replaceable(token):
-                sentence.counters["placeholders"] += 1
+                sentence.counters[SentenceCounters.placeholder] += 1
+                sentence.counters[marker_to_SentCounter[token.gr_properties[Gender]]] += 1
                 self.change_to_placeholder(token)
 
     def is_replaceable(self, token):
@@ -266,16 +281,35 @@ class PatternGenerator:
             return True
         return False
 
-LM = LanguageModel()
-generator = PatternGenerator(LM)
-# LM.save_thu()
-#LM.save_model()
-# exit()
-for i in range(100):
-    result = generator.generate()
-    print(result.get_str())
-    print(result.counters["placeholders"])
-    # for tok in result.tokens:
-    #     if tok.gr:
-    #         print(tok.text, tok.get_info())
 
+def create_and_save_lm(fname=lm_dump):
+    LM = LanguageModel()
+    LM.save_model(fname)
+
+def filter_sentence(sentence):
+    if sentence.markers[SentenceMarkers.uneven_characters]:
+        return SentenceType.bad
+    if sentence.counters[SentenceCounters.placeholder] < 1:
+        return SentenceType.filler
+    return SentenceType.good
+
+def make_patterns(lm_fname=lm_dump):
+    result = {SentenceType.good: [], SentenceType.filler: []}
+    LM = LanguageModel(lm_fname)
+    generator = PatternGenerator(LM)
+    for i in range(2000):
+        sentence = generator.generate(random.randint(12, 30))
+        s_type = filter_sentence(sentence)
+        if s_type == SentenceType.bad:
+            continue
+        print(sentence.get_str())
+        result[s_type].append(sentence.get_str())
+    save_patterns(result)
+
+def save_patterns(result):
+    for s_type in result:
+        with open("{}_patterns.txt".format(s_type.name), "w", encoding="utf-8") as f:
+            f.write("\n".join(result[s_type]))
+
+if __name__ == "__main__":
+    make_patterns()
