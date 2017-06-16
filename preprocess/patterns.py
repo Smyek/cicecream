@@ -250,9 +250,12 @@ class PatternGenerator:
     def is_replaceable(self, token):
         if token.toktype != TokenType.word:
             return False
-        # temporary (nom)
+        # temporary (nom and Gender)
         if token.gr_properties[Case] != Case.nom:
             return False
+        if not(token.gr_properties[Gender]):
+            return False
+
         if token.gr_properties[HumanName]:
                 return True
         if token.gr_properties[HumanName] == Anim.anim:
@@ -313,4 +316,5 @@ def save_patterns(result):
             f.write("\n".join(result[s_type]))
 
 if __name__ == "__main__":
-    create_and_save_lm()
+    # create_and_save_lm()
+    make_patterns()
