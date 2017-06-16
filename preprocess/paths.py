@@ -16,7 +16,7 @@ class Paths:
 
         #files
         self.lm_dump = self.service_file("LM_sicecream.pkl")
-        self.patterns = ''
+        self.patterns = self.output_file("patterns.yaml")
 
     def root_file(self, filename):
         return os.path.join(self.wd, filename)
@@ -26,6 +26,9 @@ class Paths:
 
     def data_file(self, filename):
         return os.path.join(self.data, filename)
+
+    def output_file(self, filename):
+        return os.path.join(self.output, filename)
 
     def temp_file(self, filename):
         return os.path.join(self.temp, filename)

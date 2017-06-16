@@ -22,3 +22,4 @@ preprocess/data/corpusBU/
 preprocess/data/TESTCorpus/
 preprocess/data/corpus_processed/
 preprocess/service/
+preprocess/data/output/

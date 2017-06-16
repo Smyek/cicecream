@@ -3,6 +3,7 @@ from enum import  Enum
 import random
 import copy
 import dill as pickle
+import yaml
 
 from sttk import TextHandlerUnit
 from sttk import tf_lex, SF_Safe_Russian_NoDlg
@@ -123,6 +124,75 @@ class LanguageModel:
             dmp_obj = pickle.load(dmp)
         return dmp_obj
 
+class PatternManager:
+    def __init__(self):
+        self.patterns = {"patterns": {1: {"m": [], "f": []},
+                                      2: [], 3: [], 4: [], 5: [], 6: []},
+                         "fillers": []}
+        self.demand = {1: {"m": 1000, "f": 1000},
+                       2: 500, 3: 500}
+        self.supply = {1: {"m": 0, "f": 0},
+                       2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
+
+        self.fillers_count = 0
+        self.max_fillers = 5000
+
+    def filter_sentence(self, sentence):
+        if sentence.markers[SentenceMarkers.uneven_characters]:
+            return SentenceType.bad
+        if sentence.counters[SentenceCounters.placeholder] < 1:
+            return SentenceType.filler
+        return SentenceType.good
+
+    def add(self, sentence):
+        # TODO refactor
+        sentence_string = sentence.get_str()
+        pass_type = self.filter_sentence(sentence)
+        if pass_type == SentenceType.bad:
+            return
+        if pass_type == SentenceType.filler:
+            if self.fillers_count < self.max_fillers:
+                self.patterns["fillers"].append(sentence_string)
+                self.fillers_count += 1
+            return
+
+        ph_count = sentence.counters[SentenceCounters.placeholder]
+        patterns = self.patterns["patterns"]
+        gender = None
+        if ph_count > 1 and ph_count < 7:
+            patterns_set = patterns[ph_count]
+        elif ph_count == 1:
+            gender = "m" if sentence.counters[SentenceCounters.m_placeholder] else "f"
+            patterns_set = patterns[ph_count][gender]
+        else:
+            return
+
+        if sentence_string in patterns_set:
+            return
+
+        if gender:
+            if self.supply[ph_count][gender] >= self.demand[ph_count][gender]:
+                return
+            self.supply[ph_count][gender] += 1
+        else:
+            if ph_count in self.demand and self.supply[ph_count] >= self.demand[ph_count]:
+                return
+            self.supply[ph_count] += 1
+        patterns_set.append(sentence_string)
+
+        print(sentence_string)
+        print(self.supply)
+        print()
+
+    def satisfied(self):
+        for key in self.demand:
+            if self.demand[key] != self.supply[key]:
+                return False
+        return True
+
+    def save_patterns(self):
+        with open(paths.patterns, "w", encoding="utf-8") as yaml_file:
+            yaml.dump(self.patterns, yaml_file, allow_unicode=True)
 
 class PatternGenerator:
     def __init__(self, lm):
@@ -290,25 +360,17 @@ def create_and_save_lm(fname=paths.lm_dump):
     LM = LanguageModel()
     LM.save_model(fname)
 
-def filter_sentence(sentence):
-    if sentence.markers[SentenceMarkers.uneven_characters]:
-        return SentenceType.bad
-    if sentence.counters[SentenceCounters.placeholder] < 1:
-        return SentenceType.filler
-    return SentenceType.good
-
 def make_patterns(lm_fname=paths.lm_dump):
-    result = {SentenceType.good: [], SentenceType.filler: []}
+    PM = PatternManager()
+    PM.save_patterns()
     LM = LanguageModel(lm_fname)
     generator = PatternGenerator(LM)
-    for i in range(2000):
-        sentence = generator.generate(random.randint(12, 30))
-        s_type = filter_sentence(sentence)
-        if s_type == SentenceType.bad:
-            continue
-        print(sentence.get_str())
-        result[s_type].append(sentence.get_str())
-    save_patterns(result)
+    while not PM.satisfied():
+        for lengths in [(5, 8), (8, 12), (12, 30), (10, 80)]:
+            sentence = generator.generate(random.randint(*lengths))
+            PM.add(sentence)
+    PM.save_patterns()
+    print(PM.demand)
 
 def save_patterns(result):
     for s_type in result:
@@ -316,5 +378,5 @@ def save_patterns(result):
             f.write("\n".join(result[s_type]))
 
 if __name__ == "__main__":
-    # create_and_save_lm()
-    make_patterns()
+    create_and_save_lm()
+    # make_patterns()
