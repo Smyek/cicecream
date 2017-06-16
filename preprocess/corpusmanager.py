@@ -2,14 +2,15 @@ from os import listdir, rename
 from collections import OrderedDict
 import os
 from sttk import TextHandlerUnit
-import yaml
 import dill as pickle
 
+from paths import paths
+
 class Document:
-    def __init__(self, name, doc_path):
-        self.name = name
-        self.doc_path = doc_path
-        self.dump_path = 'data/corpus_processed/' + name + ".pkl"
+    def __init__(self, fname):
+        self.name = fname.replace(".txt", "")
+        self.doc_path = paths.corpus_file(fname)
+        self.dump_path = paths.corpus_file(self.name + ".pkl", raw=False)
         self.processed = os.path.isfile(self.dump_path)
 
     def get_text(self):
@@ -29,7 +30,6 @@ class Document:
 
 class CorpusManager:
     def __init__(self):
-        self.corpus_path = 'data/corpus/'
         self.documents = {}
         self.corpusmeta = {}
 
@@ -45,11 +45,9 @@ class CorpusManager:
         return (x for x in self.documents.values())
 
     def get_corpus_documents(self):
-        for filename in listdir(self.corpus_path):
-            name = filename.replace(".txt", "")
-            doc_path = self.corpus_path + filename
-            document = Document(name, doc_path)
-            self.documents[name] = document
+        for filename in listdir(paths.corpus_raw):
+            document = Document(filename)
+            self.documents[document.name] = document
         self.documents = OrderedDict(sorted(self.documents.items(), key=lambda t: t[0]))
 
     def normalize_filenames(self):

@@ -8,13 +8,12 @@ from sttk import TextHandlerUnit
 from sttk import tf_lex, SF_Safe_Russian_NoDlg
 from sttk import tf_default
 from sttk import TokenMarkers, TokenType
-from sttk import POS, Gender, Number, Case, Other, HumanName
+from sttk import POS, Gender, Number, Case, Other, HumanName, Anim
 
 from sttk import Sentence, SentenceMarkers
 
+from paths import paths
 from corpusmanager import corpus_manager
-
-lm_dump = "LM_sicecream.pkl"
 
 class SentenceCounters(Enum):
     placeholder = 1
@@ -111,7 +110,7 @@ class LanguageModel:
             self.lmd[history] = normalize_counter(self.lmd[history])
             #print(history, self.lmd[history])
 
-    def save_model(self, fname=lm_dump):
+    def save_model(self, fname=paths.lm_dump):
         lmd_dump = {"lmd": self.lmd, "token_dictionary": self.token_dictionary}
         self.save_obj(fname, lmd_dump)
 
@@ -251,10 +250,12 @@ class PatternGenerator:
     def is_replaceable(self, token):
         if token.toktype != TokenType.word:
             return False
-        # temporary
+        # temporary (nom)
         if token.gr_properties[Case] != Case.nom:
             return False
         if token.gr_properties[HumanName]:
+                return True
+        if token.gr_properties[HumanName] == Anim.anim:
                 return True
         for tok_text in self.placeholder_tokens:
             if token.text.lower() == tok_text:
@@ -282,7 +283,7 @@ class PatternGenerator:
         return False
 
 
-def create_and_save_lm(fname=lm_dump):
+def create_and_save_lm(fname=paths.lm_dump):
     LM = LanguageModel()
     LM.save_model(fname)
 
@@ -293,7 +294,7 @@ def filter_sentence(sentence):
         return SentenceType.filler
     return SentenceType.good
 
-def make_patterns(lm_fname=lm_dump):
+def make_patterns(lm_fname=paths.lm_dump):
     result = {SentenceType.good: [], SentenceType.filler: []}
     LM = LanguageModel(lm_fname)
     generator = PatternGenerator(LM)
@@ -312,4 +313,4 @@ def save_patterns(result):
             f.write("\n".join(result[s_type]))
 
 if __name__ == "__main__":
-    make_patterns()
+    create_and_save_lm()
