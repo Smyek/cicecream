@@ -97,6 +97,7 @@ class UserManager:
 
 class VKUser():
     def __init__(self, uid):
+        print(uid, type(uid), "UID")
         self.uid = uid
         self.name, self.gender = vkm.get_name(uid)
         self.msg_link = "@id{} ({})".format(self.uid, self.name)
@@ -167,12 +168,14 @@ class PatternsManager:
         self.used_patterns.doc["Used_Patterns"].append(pattern)
         self.used_patterns.save_doc()
 
-    def generate_phrase_cheap(self):
-        users = self.user_manager.choose_random_uid()
+    def generate_phrase_cheap(self, users=None):
+        if users is None:
+            users = self.user_manager.choose_random_uid()
         pattern = self.pick_pattern(users, len(users))
         self.add_pattern_to_used(pattern.text)
         pattern.insert_users(users)
-        #self.user_manager.add_to_used(self.current_id)
+        for user in users:
+            self.user_manager.add_to_used(user.uid)
 
         return pattern.text
 

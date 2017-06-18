@@ -249,6 +249,9 @@ class Paths:
         self.patterns = self.data_file('patterns.yaml')
         self.used_patterns = self.data_file('used_patterns.yaml')
 
+        #debug
+        self.test_generation = self.temp_file("generation_out.txt")
+
     def check_paths_existence(self):
         for path_to in [self.service, self.temp, self.backups]:
             if not os.path.exists(path_to):
