@@ -18,6 +18,8 @@ class Paths:
         self.lm_dump = self.service_file("LM_sicecream.pkl")
         self.patterns = self.output_file("patterns.yaml")
 
+        self.lmd_simple = self.service_file("LMD_Simple.txt")
+
     def root_file(self, filename):
         return os.path.join(self.wd, filename)
 

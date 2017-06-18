@@ -4,6 +4,7 @@ import random
 import copy
 import dill as pickle
 import yaml
+import re
 
 from sttk import TextHandlerUnit
 from sttk import tf_lex, SF_Safe_Russian_NoDlg
@@ -51,11 +52,15 @@ class SF_Pure_Russian(SF_Safe_Russian_NoDlg):
     def __init__(self):
         SF_Safe_Russian_NoDlg.__init__(self)
         self.id = "pure_russian"
+        self.reg_unwanted = re.compile('[()"]')
+        self.exclude_markers += [SentenceMarkers.first_is_not_word]
 
     def pass_condition(self, sentence):
         if not super(SF_Pure_Russian, self).pass_condition(sentence):
             return False
         if sentence.all_words_count < 2:
+            return False
+        if self.reg_unwanted.search(sentence.get_str()):
             return False
         return True
 
@@ -63,7 +68,7 @@ class SF_Pure_Russian(SF_Safe_Russian_NoDlg):
 class LanguageModel:
     def __init__(self, lm_dump_name=None):
         self.tokfilter = tf_default
-        self.max_ngram_len = 8
+        self.max_ngram_len = 5
         self.lmd = defaultdict(Counter)
 
         self.NGR_VOCABULARIES = None
@@ -115,6 +120,13 @@ class LanguageModel:
         lmd_dump = {"lmd": self.lmd, "token_dictionary": self.token_dictionary}
         self.save_obj(fname, lmd_dump)
 
+    def save_simple(self):
+        result = []
+        for history in self.lmd:
+            result.append("{}: {}".format(history, self.lmd[history]))
+        with open(paths.lmd_simple, "w", encoding="utf-8") as f:
+            f.write("\n".join(result))
+
     def save_obj(self, fname, obj_to_save):
         with open(fname, 'wb') as output:
             pickle.dump(obj_to_save, output)
@@ -139,6 +151,8 @@ class PatternManager:
 
     def filter_sentence(self, sentence):
         if sentence.markers[SentenceMarkers.uneven_characters]:
+            return SentenceType.bad
+        if sentence.markers[SentenceMarkers.first_is_not_word]:
             return SentenceType.bad
         if sentence.counters[SentenceCounters.placeholder] < 1:
             return SentenceType.filler
@@ -208,15 +222,19 @@ class PatternGenerator:
         return sentence
 
     def generate_raw(self, length):
-        history = ["."]
+        history = [random.choice([".", "!", "?"])]
+        choices = self.lm.lmd[tuple(history)]
+        history.append(weighted_choice(choices))
         # history = [".", "Андрея"]
         should_end = False
         while not should_end:
-            for ngram_len in range(self.lm.max_ngram_len-1, 0, -1):
+            for ngram_len in range(self.lm.max_ngram_len-1, 1, -1):
                 if ngram_len > len(history):
                     continue
                 ngram = tuple(history[-ngram_len:])
                 if ngram not in self.lm.lmd:
+                    if ngram_len == 2:
+                        return self.generate_raw(length)
                     continue
                 else:
                     choice = weighted_choice(self.lm.lmd[ngram])
@@ -359,24 +377,24 @@ class PatternGenerator:
 def create_and_save_lm(fname=paths.lm_dump):
     LM = LanguageModel()
     LM.save_model(fname)
+    LM.save_simple()
 
 def make_patterns(lm_fname=paths.lm_dump):
     PM = PatternManager()
-    PM.save_patterns()
     LM = LanguageModel(lm_fname)
     generator = PatternGenerator(LM)
     while not PM.satisfied():
-        for lengths in [(5, 8), (8, 12), (12, 30), (10, 80)]:
+        for lengths in [(6, 8), (8, 10), (10, 15)]:
             sentence = generator.generate(random.randint(*lengths))
             PM.add(sentence)
     PM.save_patterns()
     print(PM.demand)
 
-def save_patterns(result):
-    for s_type in result:
-        with open("{}_patterns.txt".format(s_type.name), "w", encoding="utf-8") as f:
-            f.write("\n".join(result[s_type]))
+def save_simple_lmd(lm_fname=paths.lm_dump):
+    LM = LanguageModel(lm_fname)
+    LM.save_simple()
 
 if __name__ == "__main__":
-    # create_and_save_lm()
+    create_and_save_lm()
+    # save_simple_lmd()
     make_patterns()
