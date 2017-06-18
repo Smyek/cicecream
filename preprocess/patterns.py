@@ -199,7 +199,7 @@ class PatternGenerator:
         self.lm = lm
         self.placeholder_tokens = ["он", "она"]
         #self.placeholder_markers = [Other.persn, Other.famn, Other.patrn]
-        self.placeholder = "<usr,{},{}|{}>"
+        self.placeholder = "<usr{},{},{}|{}>"
 
     def generate(self, length=12):
         sentence = self.generate_raw(length)
@@ -315,7 +315,7 @@ class PatternGenerator:
             if self.is_replaceable(token):
                 sentence.counters[SentenceCounters.placeholder] += 1
                 sentence.counters[marker_to_SentCounter[token.gr_properties[Gender]]] += 1
-                self.change_to_placeholder(token)
+                self.change_to_placeholder(token, sentence.counters[SentenceCounters.placeholder])
 
     def is_replaceable(self, token):
         if token.toktype != TokenType.word:
@@ -335,10 +335,10 @@ class PatternGenerator:
                 return True
         return False
 
-    def change_to_placeholder(self, token):
+    def change_to_placeholder(self, token, count):
         gender = token.gr_properties[Gender].name
         case = token.gr_properties[Case].name
-        token.text = self.placeholder.format(gender, case, token.text)
+        token.text = self.placeholder.format(count, gender, case, token.text)
 
     # auxiliary
     def get_tok_obj(self, tok_text, to_copy=False):
@@ -378,5 +378,5 @@ def save_patterns(result):
             f.write("\n".join(result[s_type]))
 
 if __name__ == "__main__":
-    create_and_save_lm()
-    # make_patterns()
+    # create_and_save_lm()
+    make_patterns()

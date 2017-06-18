@@ -246,6 +246,8 @@ class Paths:
         # Constant file paths
         self.config = self.data_file("config.yaml")
         self.users = self.data_file('users.db')
+        self.patterns = self.data_file('patterns.yaml')
+        self.used_patterns = self.data_file('used_patterns.yaml')
 
     def check_paths_existence(self):
         for path_to in [self.service, self.temp, self.backups]:
@@ -357,7 +359,7 @@ class YamlHandler:
 
     def save_doc(self):
         with open(self.pth, "w", encoding="utf-8") as f:
-            yaml.dump(self.doc, f, default_flow_style=False)
+            yaml.dump(self.doc, f, default_flow_style=False, allow_unicode=True)
 
     def alias_split(self, alias):
         return alias.split(".")

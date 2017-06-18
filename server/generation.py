@@ -5,11 +5,11 @@ from utils import server_log
 from utils import database as database_users
 from utils import project_paths
 from utils import server_config
+from utils import YamlHandler
 
-import vk, random, re, string
+import vk, random, re
 
-WORDS_FILE = project_paths.data_file("words.txt")
-PATTERNS_FILE = project_paths.data_file("patterns.txt")
+pattern_user = re.compile("(<usr[0-9]+?,([mf]),(....?)\|(.+?)>)")
 
 class VKManager:
     def __init__(self):
@@ -42,16 +42,15 @@ class VKManager:
     def get_name(self, id, case='nom'):
         user = self.vk.get(method="users.get", user_ids=id, name_case=case, fields='first_name, last_name, sex')[0]
         name = "%s %s" % (user["first_name"], user["last_name"])
-        sexDict = {1: "f", 2: "m", 0: "m", 3: "m"}
-        sex = sexDict[user["sex"]]
-        return name, sex
+        genderDict = {1: "f", 2: "m", 0: "m", 3: "m"}
+        gender = genderDict[user["sex"]]
+        return name, gender
 
 class UserManager:
-    def __init__(self, vkm):
-        self.vk = vkm
+    def __init__(self):
 
         #load
-        self.group_uids = self.vk.get_ids()
+        self.group_uids = vkm.get_ids()
         database_users.update_users(self.group_uids)
 
         #selections
@@ -88,7 +87,7 @@ class UserManager:
     def choose_random_uid(self):
         uid = random.choice(self.result_selection)
         server_log.add_key_value_log("chosen uid", "%s (https://vk.com/id%s)" % (uid,uid))
-        return uid
+        return [VKUser(uid)]
 
     def log(self):
         for selection_id, selection in [("never_used", self.never_used),
@@ -96,115 +95,99 @@ class UserManager:
                                         ("group_uids", self.group_uids)]:
             server_log.add_key_value_log(selection_id, "%s uids" % len(selection))
 
+class VKUser():
+    def __init__(self, uid):
+        self.uid = uid
+        self.name, self.gender = vkm.get_name(uid)
+        self.msg_link = "@id{} ({})".format(self.uid, self.name)
 
-class PhraseGenerator:
+    def vk_link(self, UID, NAME):
+        pattern = "@id{} ({})".format(UID, NAME)
+        return pattern
+
+    def change_case(self, case):
+        self.name, self.gender = vkm.get_name(self.uid, case)
+        self.msg_link = "@id{} ({})".format(self.uid, self.name)
+
+class Placeholder:
+    def __init__(self, placeholder_reg_result):
+        self.plh_string, self.gender, self.case, self.original = placeholder_reg_result
+
+class Pattern:
+    def __init__(self, pattern):
+        self.text = pattern
+        self.placeholders = [Placeholder(plh) for plh in pattern_user.findall(self.text)]
+
+    def insert_users(self, users):
+        users_count = len(users)
+        for user in users:
+            for plh in self.placeholders:
+                if user.gender == plh.gender:
+                    self.text = self.text.replace(plh.plh_string, user.msg_link)
+        #clear
+        if users_count < len(self.placeholders):
+            for plh in self.placeholders:
+                self.text = self.text.replace(plh.plh_string, "")
+
+
+class PatternsManager:
     def __init__(self):
-        self.sentence_patterns = {}
-        self.gram = {}
-        self.reGram = re.compile("(,|=)")
-
         self.current_id = None
         self.current_username = None
 
-        self.vk = VKManager()
-        self.user_manager = UserManager(self.vk)
 
-        self.load_words()
+        self.user_manager = UserManager()
 
-    def load_patterns(self):
-        with open(PATTERNS_FILE, "r", encoding="utf-8") as f:
-            for line in f:
-                self.sentence_patterns[line[:-2]] = 1
+        self.max_pick_patterns_attempts = 20
+        self.patterns = YamlHandler(project_paths.patterns)
+        self.used_patterns = YamlHandler(project_paths.used_patterns)
 
-    def load_words(self):
-        with open(WORDS_FILE, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip().split("\t")
-                gram, words = line[0], line[1:]
-                self.gram[gram] = words
+    def pick_pattern(self, users, users_count=1, attempts=0):
+        if attempts > self.max_pick_patterns_attempts:
+            self.clear_used_patterns()
+            self.pick_pattern(users, users_count, 0)
 
-    def random_pattern(self):
-        with open(project_paths.data_file("info.txt"), "r", encoding="utf-8") as f:
-            index = random.randint(0, int(f.read()))
-            server_log.add_key_value_log("pattern", index+1)
-        with open(PATTERNS_FILE, "r", encoding="utf-8") as f:
-            count = 0
-            for pattern in f:
-                if index == count: return pattern
-                count += 1
+        if users_count == 1:
+            gender = users[0].gender
+            random_pattern = random.choice(self.patterns.doc["patterns"][users_count][gender])
+        else:
+            random_pattern = random.choice(self.patterns.doc["patterns"][users_count])
 
-    def upper_repl(self, match):
-         return match.group(1) + " " + match.group(2).upper()
+        if random_pattern in self.used_patterns.doc["Used_Patterns"]:
+            attempts += 1
+            return self.pick_pattern(users, users_count, attempts)
 
-    def make_username(self, UID, NAME):
-        pattern = "@id%s (%s)" % (UID, NAME)
-        return pattern
+        return Pattern(random_pattern)
 
-    def user_link(self, match):
-        return self.make_username(match.group(1), self.current_username)
+    def clear_used_patterns(self):
+        self.used_patterns.doc = {"Used_Patterns": []}
+        self.used_patterns.save_doc()
 
-    def phrase_refine(self, phrase):
-        phrase = " ".join(phrase)# + "."
-        phrase = re.sub(" ?-? ?-\.?$", "", phrase)
-        phrase = re.sub("^--? ?", "", phrase)
-        phrase = re.sub("- ?-", "—", phrase)
-        phrase = re.sub("</? >", "", phrase)
-        phrase = re.sub("([«\"]) ?(.+?) ?([»\"])", "\\1\\2\\3", phrase)
-        phrase = re.sub("([^" + string.punctuation + "]) ([" + string.punctuation + "])", "\\1\\2", phrase)
-        phrase = re.sub("(@[^" + string.punctuation + "]+?) ([" + string.punctuation + "])", "\\1\\2", phrase)
-        phrase = re.sub("(@[^" + string.punctuation.replace("_", "") + "]+?)-", "\\1 -", phrase)
-        phrase = re.sub("(.)@", "\\1 @", phrase)
-        phrase = re.sub(" ?\( ", " (", phrase)
-        phrase = re.sub("- то([ ?!.])", "-то\\1", phrase)
-        phrase = re.sub("([А-Яа-яЁё])- ", "\\1 - ", phrase)
+    def add_pattern_to_used(self, pattern):
+        self.used_patterns.doc["Used_Patterns"].append(pattern)
+        self.used_patterns.save_doc()
 
-        phrase = re.sub("([^\"]*?)\"([^\"]*?)", "\\1\\2", phrase)
-        phrase = re.sub("([^\(]*?)\(([^\(]*?)", "\\1\\2", phrase)
-        phrase = re.sub("([^\)]*?)\)([^\)]*?)", "\\1\\2", phrase)
+    def generate_phrase_cheap(self):
+        users = self.user_manager.choose_random_uid()
+        pattern = self.pick_pattern(users, len(users))
+        self.add_pattern_to_used(pattern.text)
+        pattern.insert_users(users)
+        #self.user_manager.add_to_used(self.current_id)
 
-
-        phrase = phrase[0].upper() + phrase[1:]
-        phrase = re.sub("([!.?] ?)([а-яё])", self.upper_repl, phrase) #здесь нужно сделать функцию которая повышает регистр буквы после знака конца предложения в его середине
-        phrase = re.sub("(\r)?\n", "", phrase)
-        # phrase = re.sub("^@", "… @", phrase)
-        phrase = re.sub(" +", " ", phrase)
-        phrase = re.sub("[Ii]d([0-9]+)", self.user_link, phrase)
-        return phrase.strip()
-
-    def word_modifier(self, word, gram):
-        for gr in ["persn", "famn", "patrn", "geo"]:
-            if gr in gram:
-                word = word[0].upper() + word[1:]
-        return word
-
-    def generate_phrase_cheap(self, username=None, sex=None):
-        phrase = []
-        pattern = self.random_pattern().strip().split("_+_")
-        for gram in pattern:
-            if "<username>" in gram:
-                if username is None:
-                    self.current_id = self.user_manager.choose_random_uid()
-                    username, sex = self.vk.get_name(self.current_id, "nom")
-                if ",%s," % sex not in gram: return self.generate_phrase_cheap(username, sex)
-                phrase.append("id" + str(self.current_id)) #make_username(self.current_id, username)
-                self.current_username = username
-                continue
-            if gram not in self.gram: return self.generate_phrase_cheap(username, sex)
-            word = self.word_modifier(random.choice(self.gram[gram]), gram)
-            phrase.append(word)
-        phrase = self.phrase_refine(phrase)
-        if (len(phrase) > 260) or (len(phrase.split()) < 8):
-            return self.generate_phrase_cheap(username, sex)
-        self.user_manager.add_to_used(self.current_id)
-        return phrase
+        return pattern.text
 
 def run_generation_job():
-    generator = PhraseGenerator()
-    phrase = generator.generate_phrase_cheap()
-    generator.vk.post_message(phrase)
+    patman = PatternsManager()
+    phrase = patman.generate_phrase_cheap()
+    vkm.post_message(phrase)
     return phrase
 
+vkm = VKManager()
+
 if __name__ == "__main__":
+    print(pattern_user.findall("<usr,f,nom|Ирина> словно попал в воде перешел речку, застрял там что-то отболело."))
+
+    exit()
     success = False
     while not success:
         try:
