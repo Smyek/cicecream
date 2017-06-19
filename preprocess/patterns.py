@@ -27,6 +27,9 @@ class SentenceType(Enum):
     bad = 2
     filler = 3
 
+class TokenCustomMarkers(Enum):
+    is_replaceable = 1
+
 marker_to_SentCounter = {Gender.m: SentenceCounters.m_placeholder,
                          Gender.f: SentenceCounters.f_placeholder}
 
@@ -150,10 +153,9 @@ class PatternManager:
         self.max_fillers = 5000
 
     def filter_sentence(self, sentence):
-        if sentence.markers[SentenceMarkers.uneven_characters]:
-            return SentenceType.bad
-        if sentence.markers[SentenceMarkers.first_is_not_word]:
-            return SentenceType.bad
+        for bad_marker in [SentenceMarkers.uneven_characters, SentenceMarkers.first_is_not_word, SentenceType.bad]:
+            if sentence.markers[bad_marker]:
+                return SentenceType.bad
         if sentence.counters[SentenceCounters.placeholder] < 1:
             return SentenceType.filler
         return SentenceType.good
@@ -298,13 +300,13 @@ class PatternGenerator:
                 return True
         return False
 
-
     def finalisation(self, sentence):
         tokens_result = []
         s_len = len(sentence.tokens)
         should_upper_first = True
         for i in range(s_len):
             current_token = sentence.tokens[i]
+            current_token.markers[TokenCustomMarkers.is_replaceable] = self.is_replaceable(current_token)
             tokens_result.append(current_token)
             # upper first char
             if should_upper_first:
@@ -321,6 +323,8 @@ class PatternGenerator:
                 if next_token.toktype in [TokenType.word, TokenType.word_fixed] and \
                                 current_token.toktype in [TokenType.word, TokenType.word_fixed]:
                     tokens_result.append(self.space_tok())
+                if current_token.markers[TokenCustomMarkers.is_replaceable] and next_token.markers[TokenCustomMarkers.is_replaceable]:
+                    sentence.markers[SentenceType.bad] = True
         sentence.tokens = tokens_result
         sentence.calculate_meta()
         return sentence
@@ -330,7 +334,7 @@ class PatternGenerator:
         s_len = len(sentence.tokens)
         for i in range(s_len):
             token = sentence.tokens[i]
-            if self.is_replaceable(token):
+            if token.markers[TokenCustomMarkers.is_replaceable]:
                 sentence.counters[SentenceCounters.placeholder] += 1
                 sentence.counters[marker_to_SentCounter[token.gr_properties[Gender]]] += 1
                 self.change_to_placeholder(token, sentence.counters[SentenceCounters.placeholder])
@@ -341,12 +345,12 @@ class PatternGenerator:
         # temporary (nom and Gender)
         if token.gr_properties[Case] != Case.nom:
             return False
-        if not(token.gr_properties[Gender]):
+        if token.gr_properties[Gender] not in [Gender.m, Gender.f]:
             return False
 
         if token.gr_properties[HumanName]:
                 return True
-        if token.gr_properties[HumanName] == Anim.anim:
+        if token.gr_properties[Anim] == Anim.anim:
                 return True
         for tok_text in self.placeholder_tokens:
             if token.text.lower() == tok_text:
