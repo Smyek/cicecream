@@ -19,6 +19,8 @@ from corpusmanager import corpus_manager
 
 from exceptions import word_exceptions
 
+from utils import YamlHandler
+
 class SentenceCounters(Enum):
     placeholder = 1
     m_placeholder = 2
@@ -145,22 +147,14 @@ class LanguageModel:
 
 class PatternManager:
     def __init__(self):
-        self.patterns = {"patterns": {"m1f0": [], "m0f1": [],
-                                      "m1f1": [], "m2f0": [], "m0f2": [],
-                                      "m2f1": [], "m1f2": [], "m3f0": [], "m0f3": []},
+        self.patterns_config = YamlHandler(paths.patterns_config).doc
+        self.patterns = {"patterns": {},
                          "fillers": []}
-
         self.supply = Counter()
-        # self.supply = {"m1f0": 0, "m0f1": 0,
-        #                "m1f1": 0, "m2f0": 0, "m0f2": 0,
-        #                "m2f1": 0, "m1f2": 0, "m3f0": 0, "m0f3": 0}
-
-        self.demand = {"m1f0": 50, "m0f1": 50,
-                       "m1f1": 10, "m2f0": 10, "m0f2": 10,
-                       "m2f1": 1, "m1f2": 1, "m3f0": 1, "m0f3": 0}
+        self.demand = self.patterns_config["Demand"]
 
         self.fillers_count = 0
-        self.max_fillers = 100
+        self.max_fillers = self.patterns_config["MaxFillers"]
 
     def filter_sentence(self, sentence):
         for bad_marker in [SentenceMarkers.uneven_characters, SentenceMarkers.first_is_not_word, SentenceType.bad, SentenceMarkers.has_bastard]:
@@ -184,6 +178,8 @@ class PatternManager:
         ph_count = sentence.counters[SentenceCounters.placeholder]
         if 0 < ph_count < 4:
             gender_set = "m{}f{}".format(sentence.counters[SentenceCounters.m_placeholder], sentence.counters[SentenceCounters.f_placeholder])
+            if gender_set not in self.patterns["patterns"]:
+                self.patterns["patterns"][gender_set] = []
             patterns_set = self.patterns["patterns"][gender_set]
         else: return
 

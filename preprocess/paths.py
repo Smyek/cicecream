@@ -23,6 +23,7 @@ class Paths:
         #datafiles
         self.fixlist = self.data_file("fixlist.txt")
         self.exceptions = self.data_file("exceptions.yaml")
+        self.patterns_config = self.data_file("patterns_config.yaml")
 
     def root_file(self, filename):
         return os.path.join(self.wd, filename)

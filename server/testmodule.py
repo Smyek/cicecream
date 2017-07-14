@@ -10,10 +10,12 @@ from utils import project_paths
 patman = PatternsManager()
 
 TEST_USER = VKUser(4909962)
+TEST_USER_M2 = VKUser(9693167)
 TEST_USER_F = VKUser(7217409)
 TEST_PACK = UserPack([TEST_USER])
 TEST_PACK_F = UserPack([TEST_USER_F])
 TEST_PACK_M1F1 = UserPack([TEST_USER, TEST_USER_F])
+TEST_PACK_M2F1 = UserPack([TEST_USER, TEST_USER_M2, TEST_USER_F])
 
 def simple_test(count=1, preset_user=None, post=False):
     results = []
@@ -36,6 +38,6 @@ def save_generation_out(result):
 
 if __name__ == "__main__":
     vkm._TEST_MODE = True
-    simple_test(3, TEST_PACK_M1F1)
+    simple_test(100, TEST_PACK)
 
 

@@ -103,6 +103,7 @@ class VKUser:
     def __init__(self, uid):
         self.uid = uid
         self.name, self.gender = vkm.get_name(uid)
+        self.case = "nom"
         self.msg_link = "@id{} ({})".format(self.uid, self.name)
 
     def vk_link(self, UID, NAME):
@@ -112,6 +113,7 @@ class VKUser:
     def change_case(self, case):
         self.name, self.gender = vkm.get_name(self.uid, case)
         self.msg_link = "@id{} ({})".format(self.uid, self.name)
+        self.case = case
 
     def __eq__(self, other):
         if self.gender == other.gender:
@@ -145,7 +147,7 @@ class Pattern:
         for user in users:
             for plh in self.placeholders:
                 if user == plh:
-                    if plh.case != "nom":
+                    if plh.case != user.case:
                         user.change_case(plh.case)
                     self.text = self.text.replace(plh.plh_string, user.msg_link)
                     break
