@@ -2,7 +2,7 @@
 import time
 
 from generation import PatternsManager
-from generation import VKUser
+from generation import VKUser, UserPack
 from generation import vkm
 
 from utils import project_paths
@@ -11,13 +11,14 @@ patman = PatternsManager()
 
 TEST_USER = VKUser(4909962)
 TEST_USER_F = VKUser(7217409)
+TEST_PACK = UserPack([TEST_USER])
+TEST_PACK_F = UserPack([TEST_USER_F])
+TEST_PACK_M1F1 = UserPack([TEST_USER, TEST_USER_F])
 
 def simple_test(count=1, preset_user=None, post=False):
     results = []
-    if preset_user:
-        preset_user = [preset_user]
-    else:
-        preset_user = [TEST_USER]
+    if not preset_user:
+        preset_user = TEST_PACK
 
     for i in range(count):
         phrase = patman.generate_phrase_cheap(preset_user)
@@ -35,6 +36,6 @@ def save_generation_out(result):
 
 if __name__ == "__main__":
     vkm._TEST_MODE = True
-    simple_test(100, TEST_USER_F)
+    simple_test(3, TEST_PACK_M1F1)
 
 

@@ -1,11 +1,14 @@
 #!/usr/bin/python3.5
 #coding: utf-8
 
+from collections import Counter
+
 from utils import server_log
 from utils import database as database_users
 from utils import project_paths
 from utils import server_config
 from utils import YamlHandler
+from utils import GenderSet
 
 import vk, random, re
 
@@ -87,7 +90,8 @@ class UserManager:
     def choose_random_uid(self):
         uid = random.choice(self.result_selection)
         server_log.add_key_value_log("chosen uid", "%s (https://vk.com/id%s)" % (uid,uid))
-        return [VKUser(uid)]
+        user_pack = UserPack([VKUser(uid)])
+        return user_pack
 
     def log(self):
         for selection_id, selection in [("never_used", self.never_used),
@@ -95,7 +99,7 @@ class UserManager:
                                         ("group_uids", self.group_uids)]:
             server_log.add_key_value_log(selection_id, "%s uids" % len(selection))
 
-class VKUser():
+class VKUser:
     def __init__(self, uid):
         self.uid = uid
         self.name, self.gender = vkm.get_name(uid)
@@ -109,9 +113,27 @@ class VKUser():
         self.name, self.gender = vkm.get_name(self.uid, case)
         self.msg_link = "@id{} ({})".format(self.uid, self.name)
 
+    def __eq__(self, other):
+        if self.gender == other.gender:
+            return True
+        return False
+
+class UserPack:
+    def __init__(self, users_list):
+        self.list = users_list
+        self.gender_set = GenderSet(users_list)
+
+    def __iter__(self):
+        return (x for x in self.list)
+
 class Placeholder:
     def __init__(self, placeholder_reg_result):
         self.plh_string, self.gender, self.case, self.original = placeholder_reg_result
+
+    def __eq__(self, other):
+        if self.gender == other.gender:
+            return True
+        return False
 
 class Pattern:
     def __init__(self, pattern):
@@ -122,8 +144,12 @@ class Pattern:
         users_count = len(users)
         for user in users:
             for plh in self.placeholders:
-                if user.gender == plh.gender:
+                if user == plh:
+                    if plh.case != "nom":
+                        user.change_case(plh.case)
                     self.text = self.text.replace(plh.plh_string, user.msg_link)
+                    break
+
         #clear
         if users_count < len(self.placeholders):
             for plh in self.placeholders:
@@ -142,24 +168,23 @@ class PatternsManager:
         self.patterns = YamlHandler(project_paths.patterns)
         self.used_patterns = YamlHandler(project_paths.used_patterns)
 
-    def pick_pattern(self, users, users_count=1, attempts=0):
+    def pick_pattern(self, user_pack, attempts=0):
         if attempts > self.max_pick_patterns_attempts:
             server_log.add_log("clear_used_patterns")
             self.clear_used_patterns()
-            self.pick_pattern(users, users_count, 0)
+            self.pick_pattern(user_pack, 0)
 
-        if users_count == 1:
-            gender = users[0].gender
-            random_pattern = random.choice(self.patterns.doc["patterns"][users_count][gender])
-        else:
-            random_pattern = random.choice(self.patterns.doc["patterns"][users_count])
+        gender_set = user_pack.gender_set.str
+        random_pattern = random.choice(self.patterns.doc["patterns"][gender_set])
 
         if random_pattern in self.used_patterns.doc["Used_Patterns"]:
             attempts += 1
-            return self.pick_pattern(users, users_count, attempts)
+            server_log.add_log("Pattern already used.")
+            return self.pick_pattern(user_pack, attempts)
 
-        server_log.add_log("Pattern attempt: {}".format(attempts))
-        return Pattern(random_pattern)
+        random_pattern = Pattern(random_pattern)
+        server_log.add_log("Pattern pick attempt: {}".format(attempts))
+        return random_pattern
 
     def clear_used_patterns(self):
         self.used_patterns.doc = {"Used_Patterns": []}
@@ -169,14 +194,14 @@ class PatternsManager:
         self.used_patterns.doc["Used_Patterns"].append(pattern)
         self.used_patterns.save_doc()
 
-    def generate_phrase_cheap(self, users=None):
-        if users is None:
-            users = self.user_manager.choose_random_uid()
-        pattern = self.pick_pattern(users, len(users))
+    def generate_phrase_cheap(self, user_pack=None):
+        if user_pack is None:
+            user_pack = self.user_manager.choose_random_uid()
+        pattern = self.pick_pattern(user_pack)
         self.add_pattern_to_used(pattern.text)
         server_log.add_log(pattern.text)
-        pattern.insert_users(users)
-        for user in users:
+        pattern.insert_users(user_pack.list)
+        for user in user_pack:
             self.user_manager.add_to_used(user.uid)
 
         return pattern.text

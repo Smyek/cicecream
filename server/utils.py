@@ -7,6 +7,7 @@ import datetime, time
 import sqlite3
 import atexit
 import yaml
+from collections import Counter
 
 class SingletonDecorator:
     def __init__(self, p_class):
@@ -398,6 +399,29 @@ class TimeManager:
     def time_readable(self):
         # TODO
         pass
+
+class GenderSet:
+    def __init__(self, users=None, gs_str=None):
+        self.template = "m{}f{}"
+        self.str = gs_str
+        self.counter = Counter()
+
+        self.users_to_gs(users)
+        self.str_to_gs(gs_str)
+
+    def users_to_gs(self, users):
+        if not users:
+            return None
+        for u in users:
+            self.counter[u.gender] += 1
+        self.str = self.template.format(self.counter["m"], self.counter["f"])
+
+    def str_to_gs(self, gs_str):
+        if not gs_str:
+            return None
+        genders = gs_str.strip("m").split("f")
+        self.counter["m"] += genders[0]
+        self.counter["f"] += genders[1]
 
 
 # Singletons init

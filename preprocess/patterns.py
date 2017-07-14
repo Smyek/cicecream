@@ -57,9 +57,10 @@ class SF_Pure_Russian(SF_Safe_Russian_NoDlg):
     def __init__(self):
         SF_Safe_Russian_NoDlg.__init__(self)
         self.id = "pure_russian"
-        self.reg_unwanted = re.compile('[()"]')
+        self.reg_unwanted = re.compile('[\(\)"]')
         self.exclude_markers += [SentenceMarkers.first_is_not_word,
                                  SentenceMarkers.has_obscene,
+                                 SentenceMarkers.has_bastard,
                                  SentenceMarkers.has_bad_single_char]
 
     def pass_condition(self, sentence):
@@ -144,13 +145,19 @@ class LanguageModel:
 
 class PatternManager:
     def __init__(self):
-        self.patterns = {"patterns": {1: {"m": [], "f": []},
-                                      2: [], 3: [], 4: [], 5: [], 6: []},
+        self.patterns = {"patterns": {"m1f0": [], "m0f1": [],
+                                      "m1f1": [], "m2f0": [], "m0f2": [],
+                                      "m2f1": [], "m1f2": [], "m3f0": [], "m0f3": []},
                          "fillers": []}
-        self.demand = {1: {"m": 2000, "f": 2000},
-                       2: 200, 3: 200}
-        self.supply = {1: {"m": 0, "f": 0},
-                       2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
+
+        self.supply = Counter()
+        # self.supply = {"m1f0": 0, "m0f1": 0,
+        #                "m1f1": 0, "m2f0": 0, "m0f2": 0,
+        #                "m2f1": 0, "m1f2": 0, "m3f0": 0, "m0f3": 0}
+
+        self.demand = {"m1f0": 50, "m0f1": 50,
+                       "m1f1": 10, "m2f0": 10, "m0f2": 10,
+                       "m2f1": 1, "m1f2": 1, "m3f0": 1, "m0f3": 0}
 
         self.fillers_count = 0
         self.max_fillers = 100
@@ -174,29 +181,19 @@ class PatternManager:
                 self.patterns["fillers"].append(sentence_string)
                 self.fillers_count += 1
             return
-
         ph_count = sentence.counters[SentenceCounters.placeholder]
-        patterns = self.patterns["patterns"]
-        gender = None
-        if ph_count > 1 and ph_count < 7:
-            patterns_set = patterns[ph_count]
-        elif ph_count == 1:
-            gender = "m" if sentence.counters[SentenceCounters.m_placeholder] else "f"
-            patterns_set = patterns[ph_count][gender]
-        else:
-            return
+        if 0 < ph_count < 4:
+            gender_set = "m{}f{}".format(sentence.counters[SentenceCounters.m_placeholder], sentence.counters[SentenceCounters.f_placeholder])
+            patterns_set = self.patterns["patterns"][gender_set]
+        else: return
 
         if sentence_string in patterns_set:
             return
 
-        if gender:
-            if self.supply[ph_count][gender] >= self.demand[ph_count][gender]:
-                return
-            self.supply[ph_count][gender] += 1
-        else:
-            if ph_count in self.demand and self.supply[ph_count] >= self.demand[ph_count]:
-                return
-            self.supply[ph_count] += 1
+        if self.supply[gender_set] >= self.demand[gender_set]:
+            return
+        self.supply[gender_set] += 1
+
         patterns_set.append(sentence_string)
 
         print(sentence_string)
