@@ -20,6 +20,10 @@ class Paths:
 
         self.lmd_simple = self.service_file("LMD_Simple.txt")
 
+        #datafiles
+        self.fixlist = self.data_file("fixlist.txt")
+        self.exceptions = self.data_file("exceptions.yaml")
+
     def root_file(self, filename):
         return os.path.join(self.wd, filename)
 

@@ -1,0 +1,13 @@
+Рудак
+[Рудак] S,famn,m,nom,sg
+[Рудак]а S,famn,m,gen,sg
+[Рудак]у S,famn,m,dat,sg
+[Рудак]а S,famn,m,acc,sg
+[Рудак]ом S,famn,m,ins,sg
+[Рудак]е S,famn,m,abl,sg
+[Рудак]и S,famn,m,nom,pl
+[Рудак]ов S,famn,m,gen,pl
+[Рудак]ам S,famn,m,dat,pl
+[Рудак]ов S,famn,m,acc,pl
+[Рудак]ами S,famn,m,ins,pl
+[Рудак]ах S,famn,m,abl,pl

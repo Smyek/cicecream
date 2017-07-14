@@ -97,7 +97,6 @@ class UserManager:
 
 class VKUser():
     def __init__(self, uid):
-        print(uid, type(uid), "UID")
         self.uid = uid
         self.name, self.gender = vkm.get_name(uid)
         self.msg_link = "@id{} ({})".format(self.uid, self.name)
@@ -145,6 +144,7 @@ class PatternsManager:
 
     def pick_pattern(self, users, users_count=1, attempts=0):
         if attempts > self.max_pick_patterns_attempts:
+            server_log.add_log("clear_used_patterns")
             self.clear_used_patterns()
             self.pick_pattern(users, users_count, 0)
 
@@ -158,6 +158,7 @@ class PatternsManager:
             attempts += 1
             return self.pick_pattern(users, users_count, attempts)
 
+        server_log.add_log("Pattern attempt: {}".format(attempts))
         return Pattern(random_pattern)
 
     def clear_used_patterns(self):
@@ -173,6 +174,7 @@ class PatternsManager:
             users = self.user_manager.choose_random_uid()
         pattern = self.pick_pattern(users, len(users))
         self.add_pattern_to_used(pattern.text)
+        server_log.add_log(pattern.text)
         pattern.insert_users(users)
         for user in users:
             self.user_manager.add_to_used(user.uid)
@@ -188,9 +190,6 @@ def run_generation_job():
 vkm = VKManager()
 
 if __name__ == "__main__":
-    print(pattern_user.findall("<usr,f,nom|Ирина> словно попал в воде перешел речку, застрял там что-то отболело."))
-
-    exit()
     success = False
     while not success:
         try:

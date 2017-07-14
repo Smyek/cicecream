@@ -9,16 +9,17 @@ from utils import project_paths
 
 patman = PatternsManager()
 
-TEST_UID = 4909962
-TEST_USER = VKUser(TEST_UID)
+TEST_USER = VKUser(4909962)
+TEST_USER_F = VKUser(7217409)
 
 def simple_test(count=1, preset_user=None, post=False):
     results = []
+    if preset_user:
+        preset_user = [preset_user]
+    else:
+        preset_user = [TEST_USER]
+
     for i in range(count):
-        if preset_user:
-            preset_user = [TEST_USER]
-        else:
-            time.sleep(0.5)
         phrase = patman.generate_phrase_cheap(preset_user)
         if post:
             vkm.post_message(phrase)
@@ -34,6 +35,6 @@ def save_generation_out(result):
 
 if __name__ == "__main__":
     vkm._TEST_MODE = True
-    simple_test(100, TEST_UID)
+    simple_test(100, TEST_USER_F)
 
 

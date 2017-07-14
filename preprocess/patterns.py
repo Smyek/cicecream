@@ -17,6 +17,8 @@ from sttk import Sentence, SentenceMarkers
 from paths import paths
 from corpusmanager import corpus_manager
 
+from exceptions import word_exceptions
+
 class SentenceCounters(Enum):
     placeholder = 1
     m_placeholder = 2
@@ -56,7 +58,9 @@ class SF_Pure_Russian(SF_Safe_Russian_NoDlg):
         SF_Safe_Russian_NoDlg.__init__(self)
         self.id = "pure_russian"
         self.reg_unwanted = re.compile('[()"]')
-        self.exclude_markers += [SentenceMarkers.first_is_not_word]
+        self.exclude_markers += [SentenceMarkers.first_is_not_word,
+                                 SentenceMarkers.has_obscene,
+                                 SentenceMarkers.has_bad_single_char]
 
     def pass_condition(self, sentence):
         if not super(SF_Pure_Russian, self).pass_condition(sentence):
@@ -71,7 +75,7 @@ class SF_Pure_Russian(SF_Safe_Russian_NoDlg):
 class LanguageModel:
     def __init__(self, lm_dump_name=None):
         self.tokfilter = tf_default
-        self.max_ngram_len = 5
+        self.max_ngram_len = 4
         self.lmd = defaultdict(Counter)
 
         self.NGR_VOCABULARIES = None
@@ -87,7 +91,7 @@ class LanguageModel:
             print("LM dump loaded.")
 
     def load_thu(self):
-        thu = TextHandlerUnit()
+        thu = TextHandlerUnit(fixlist_path = paths.fixlist)
         thu.max_ngram_len = self.max_ngram_len
         thu.tokenfilters = [self.tokfilter]
         thu.sentencefilter = SF_Pure_Russian()
@@ -107,7 +111,6 @@ class LanguageModel:
         self.NGR_VOCABULARIES = thu.NGR_VOCABULARIES
         self.token_dictionary = thu.token_dictionary
         self.make_model()
-
 
     def make_model(self):
         for ngram_len in range(2, self.max_ngram_len+1):
@@ -144,16 +147,16 @@ class PatternManager:
         self.patterns = {"patterns": {1: {"m": [], "f": []},
                                       2: [], 3: [], 4: [], 5: [], 6: []},
                          "fillers": []}
-        self.demand = {1: {"m": 1000, "f": 1000},
-                       2: 500, 3: 500}
+        self.demand = {1: {"m": 2000, "f": 2000},
+                       2: 200, 3: 200}
         self.supply = {1: {"m": 0, "f": 0},
                        2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
 
         self.fillers_count = 0
-        self.max_fillers = 5000
+        self.max_fillers = 100
 
     def filter_sentence(self, sentence):
-        for bad_marker in [SentenceMarkers.uneven_characters, SentenceMarkers.first_is_not_word, SentenceType.bad]:
+        for bad_marker in [SentenceMarkers.uneven_characters, SentenceMarkers.first_is_not_word, SentenceType.bad, SentenceMarkers.has_bastard]:
             if sentence.markers[bad_marker]:
                 return SentenceType.bad
         if sentence.counters[SentenceCounters.placeholder] < 1:
@@ -306,7 +309,9 @@ class PatternGenerator:
         should_upper_first = True
         for i in range(s_len):
             current_token = sentence.tokens[i]
-            current_token.markers[TokenCustomMarkers.is_replaceable] = self.is_replaceable(current_token)
+            next_token = sentence.tokens[i + 1] if i != s_len-1 else None
+            prev_token = sentence.tokens[i - 1] if i != 0 else None
+            current_token.markers[TokenCustomMarkers.is_replaceable] = self.is_replaceable(current_token, next_token, prev_token)
             tokens_result.append(current_token)
             # upper first char
             if should_upper_first:
@@ -339,13 +344,22 @@ class PatternGenerator:
                 sentence.counters[marker_to_SentCounter[token.gr_properties[Gender]]] += 1
                 self.change_to_placeholder(token, sentence.counters[SentenceCounters.placeholder])
 
-    def is_replaceable(self, token):
+    def is_replaceable(self, token, next_token, prev_token):
         if token.toktype != TokenType.word:
             return False
-        # temporary (nom and Gender)
-        if token.gr_properties[Case] != Case.nom:
+        # temporary (Gender)
+        if token.gr_properties[Case] not in [Case.nom, Case.gen, Case.acc, Case.abl]:
             return False
         if token.gr_properties[Gender] not in [Gender.m, Gender.f]:
+            return False
+        if token.gr_properties[Number] != Number.sg:
+            return False
+
+        if word_exceptions.is_not_plh(token.lex):
+            return False
+
+        if (next_token and next_token.text == "-") or (prev_token and prev_token.text == "-"):
+            #print(prev_token.text, token.text, next_token.text)
             return False
 
         if token.gr_properties[HumanName]:
@@ -378,6 +392,8 @@ class PatternGenerator:
         return False
 
 
+
+
 def create_and_save_lm(fname=paths.lm_dump):
     LM = LanguageModel()
     LM.save_model(fname)
@@ -388,7 +404,7 @@ def make_patterns(lm_fname=paths.lm_dump):
     LM = LanguageModel(lm_fname)
     generator = PatternGenerator(LM)
     while not PM.satisfied():
-        for lengths in [(6, 8), (8, 10), (10, 15)]:
+        for lengths in [(3, 5), (6, 8), (8, 11)]:
             sentence = generator.generate(random.randint(*lengths))
             PM.add(sentence)
     PM.save_patterns()
