@@ -115,18 +115,20 @@ class LanguageModel:
         return thu
 
     def process_corpus(self):
-        thu = self.load_thu()
+        main_thu = self.load_thu()
         for doc in corpus_manager:
+            single_thu = self.load_thu()
             if not doc.processed:
-                thu.process(doc.get_text())
-                thu.make_ngram_vocabularies()
-                doc.save(thu)
+                single_thu.process(doc.get_text())
+                single_thu.make_ngram_vocabularies()
+                doc.save(single_thu)
             else:
                 dump_dictionary = doc.get_dump()
-                thu.NGR_VOCABULARIES.load_dump(dump_dictionary["ngr"])
-                thu.token_dictionary.load_dump(dump_dictionary["tokdic"])
-        self.NGR_VOCABULARIES = thu.NGR_VOCABULARIES
-        self.token_dictionary = thu.token_dictionary
+                single_thu.NGR_VOCABULARIES.load_dump(dump_dictionary["ngr"])
+                single_thu.token_dictionary.load_dump(dump_dictionary["tokdic"])
+            main_thu += single_thu
+        self.NGR_VOCABULARIES = main_thu.NGR_VOCABULARIES
+        self.token_dictionary = main_thu.token_dictionary
         self.make_model()
 
     def make_model(self):

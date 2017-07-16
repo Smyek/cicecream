@@ -11,3 +11,17 @@
 [Рудак]ов S,famn,m,acc,pl
 [Рудак]ами S,famn,m,ins,pl
 [Рудак]ах S,famn,m,abl,pl
+
+Гута
+[Гут] S,persn,f,nom,sg
+[Гут]ы S,persn,f,gen,sg
+[Гут]е S,persn,f,dat,sg
+[Гут]ы S,persn,f,acc,sg
+[Гут]ой S,persn,f,ins,sg
+[Гут]е S,persn,f,abl,sg
+[Гут]ы S,persn,f,nom,pl
+[Гут] S,persn,f,gen,pl
+[Гут]ам S,persn,f,dat,pl
+[Гут] S,persn,f,acc,pl
+[Гут]ами S,persn,f,ins,pl
+[Гут]ах S,persn,f,abl,pl
