@@ -2,7 +2,8 @@ from os import listdir, rename
 from collections import OrderedDict
 import os
 from sttk import TextHandlerUnit
-import dill as pickle
+##import dill as pickle
+from pprint import pformat
 
 from paths import paths
 
@@ -10,7 +11,7 @@ class Document:
     def __init__(self, fname):
         self.name = fname.replace(".txt", "")
         self.doc_path = paths.corpus_file(fname)
-        self.dump_path = paths.corpus_file(self.name + ".pkl", raw=False)
+        self.dump_path = paths.corpus_file(self.name + ".dump", raw=False)
         self.processed = os.path.isfile(self.dump_path)
 
     def get_text(self):
@@ -18,14 +19,14 @@ class Document:
             return f.read()
 
     def save(self, thu):
-        dump_dictionary = {"ngr": thu.NGR_VOCABULARIES, "tokdic": thu.token_dictionary}
-        with open(self.dump_path, 'wb') as output:
-            pickle.dump(dump_dictionary, output)
+        dump_dictionary = {"ngr": thu.NGR_VOCABULARIES.get_dump(), "tokdic": thu.token_dictionary.get_dump()}
+        with open(self.dump_path, 'w', encoding="utf-8") as output:
+            output.write(pformat(dump_dictionary))
 
     def get_dump(self):
         print("getting dump {}".format(self.dump_path))
-        with open(self.dump_path, 'rb') as dmp:
-            dmp_obj = pickle.load(dmp)
+        with open(self.dump_path, 'r', encoding="utf-8") as dmp:
+            dmp_obj = eval(dmp.read())
         return dmp_obj
 
 class CorpusManager:

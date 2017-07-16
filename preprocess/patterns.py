@@ -11,8 +11,8 @@ from sttk import tf_lex, SF_Safe_Russian_NoDlg
 from sttk import tf_default
 from sttk import TokenMarkers, TokenType
 from sttk import POS, Gender, Number, Case, Other, HumanName, Anim
-
 from sttk import Sentence, SentenceMarkers
+from sttk import markers_manager
 
 from paths import paths
 from corpusmanager import corpus_manager
@@ -31,11 +31,21 @@ class SentenceType(Enum):
     bad = 2
     filler = 3
 
+class SentenceCustomMarkers(Enum):
+    has_V = 1
+    has_exception = 2
+
+
 class TokenCustomMarkers(Enum):
     is_replaceable = 1
+    exception = 2
 
 marker_to_SentCounter = {Gender.m: SentenceCounters.m_placeholder,
                          Gender.f: SentenceCounters.f_placeholder}
+
+def custom_token_marker_signer(token):
+    if word_exceptions.is_general(token.lex):
+        token.markers[TokenCustomMarkers.exception] = True
 
 def normalize_counter(counter):
     sum = 0
@@ -98,6 +108,10 @@ class LanguageModel:
         thu.max_ngram_len = self.max_ngram_len
         thu.tokenfilters = [self.tokfilter]
         thu.sentencefilter = SF_Pure_Russian()
+
+        markers_manager.add_custom_enum(TokenCustomMarkers)
+        markers_manager.token_signers.append(custom_token_marker_signer)
+        markers_manager.add_tokmar_to_sentmar(TokenCustomMarkers.exception, SentenceCustomMarkers.has_exception)
         return thu
 
     def process_corpus(self):
@@ -109,8 +123,8 @@ class LanguageModel:
                 doc.save(thu)
             else:
                 dump_dictionary = doc.get_dump()
-                thu.NGR_VOCABULARIES = dump_dictionary["ngr"]
-                thu.token_dictionary = dump_dictionary["tokdic"]
+                thu.NGR_VOCABULARIES.load_dump(dump_dictionary["ngr"])
+                thu.token_dictionary.load_dump(dump_dictionary["tokdic"])
         self.NGR_VOCABULARIES = thu.NGR_VOCABULARIES
         self.token_dictionary = thu.token_dictionary
         self.make_model()
@@ -157,9 +171,12 @@ class PatternManager:
         self.max_fillers = self.patterns_config["MaxFillers"]
 
     def filter_sentence(self, sentence):
-        for bad_marker in [SentenceMarkers.uneven_characters, SentenceMarkers.first_is_not_word, SentenceType.bad, SentenceMarkers.has_bastard]:
+        for bad_marker in [SentenceMarkers.uneven_characters, SentenceMarkers.first_is_not_word,
+                           SentenceType.bad, SentenceMarkers.has_bastard, SentenceCustomMarkers.has_exception]:
             if sentence.markers[bad_marker]:
                 return SentenceType.bad
+        if sentence.all_words_count > 15 or sentence.all_words_count < 2:
+            return SentenceType.bad
         if sentence.counters[SentenceCounters.placeholder] < 1:
             return SentenceType.filler
         return SentenceType.good
@@ -269,6 +286,7 @@ class PatternGenerator:
                 continue
             current_token = sentence.tokens[i]
             next_token = sentence.tokens[i + 1]
+
             if not (self.is_name(current_token) and self.is_name(next_token)) or \
                     (current_token.gr_properties[HumanName] == next_token.gr_properties[HumanName]):
                 tokens_result.append(current_token)
@@ -389,7 +407,7 @@ class PatternGenerator:
 
 def create_and_save_lm(fname=paths.lm_dump):
     LM = LanguageModel()
-    LM.save_model(fname)
+    #LM.save_model(fname)
     LM.save_simple()
 
 def make_patterns(lm_fname=paths.lm_dump):
@@ -397,7 +415,7 @@ def make_patterns(lm_fname=paths.lm_dump):
     LM = LanguageModel(lm_fname)
     generator = PatternGenerator(LM)
     while not PM.satisfied():
-        for lengths in [(3, 5), (6, 8), (8, 11)]:
+        for lengths in [(3, 5), (6, 8), (8, 10)]:
             sentence = generator.generate(random.randint(*lengths))
             PM.add(sentence)
     PM.save_patterns()
@@ -408,6 +426,5 @@ def save_simple_lmd(lm_fname=paths.lm_dump):
     LM.save_simple()
 
 if __name__ == "__main__":
-    create_and_save_lm()
-    # save_simple_lmd()
-    make_patterns()
+    # create_and_save_lm()
+    make_patterns(None)

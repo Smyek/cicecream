@@ -353,8 +353,8 @@ class BackupManager:
         return hash_md5.hexdigest()
 
 class YamlHandler:
-    def __init__(self, document):
-        self.pth = document
+    def __init__(self, document_path):
+        self.pth = document_path
         self.doc = self.load_doc()
 
     def load_doc(self):
