@@ -2,11 +2,11 @@ from collections import defaultdict, Counter
 from enum import  Enum
 import random
 import copy
-import dill as pickle
+from pprint import pformat
 import yaml
 import re
 
-from sttk import TextHandlerUnit
+from sttk import TextHandlerUnit, TokenDictionary
 from sttk import tf_lex, SF_Safe_Russian_NoDlg
 from sttk import tf_default
 from sttk import TokenMarkers, TokenType
@@ -46,6 +46,10 @@ marker_to_SentCounter = {Gender.m: SentenceCounters.m_placeholder,
 def custom_token_marker_signer(token):
     if word_exceptions.is_general(token.lex):
         token.markers[TokenCustomMarkers.exception] = True
+
+markers_manager.add_custom_enum(TokenCustomMarkers)
+markers_manager.token_signers.append(custom_token_marker_signer)
+markers_manager.add_tokmar_to_sentmar(TokenCustomMarkers.exception, SentenceCustomMarkers.has_exception)
 
 def normalize_counter(counter):
     sum = 0
@@ -100,7 +104,9 @@ class LanguageModel:
             print("LM dump loading..")
             lm_dump = self.get_dump(lm_dump_name)
             self.lmd = lm_dump["lmd"]
-            self.token_dictionary = lm_dump["token_dictionary"]
+            self.token_dictionary = TokenDictionary()
+            self.token_dictionary.load_dump(lm_dump["token_dictionary"])
+            print(self.token_dictionary.dic)
             print("LM dump loaded.")
 
     def load_thu(self):
@@ -108,10 +114,6 @@ class LanguageModel:
         thu.max_ngram_len = self.max_ngram_len
         thu.tokenfilters = [self.tokfilter]
         thu.sentencefilter = SF_Pure_Russian()
-
-        markers_manager.add_custom_enum(TokenCustomMarkers)
-        markers_manager.token_signers.append(custom_token_marker_signer)
-        markers_manager.add_tokmar_to_sentmar(TokenCustomMarkers.exception, SentenceCustomMarkers.has_exception)
         return thu
 
     def process_corpus(self):
@@ -142,23 +144,22 @@ class LanguageModel:
             #print(history, self.lmd[history])
 
     def save_model(self, fname=paths.lm_dump):
+        print("Saving lmd..")
+        self.lmd = dict(self.lmd)
+        self.token_dictionary = self.token_dictionary.get_dump()
         lmd_dump = {"lmd": self.lmd, "token_dictionary": self.token_dictionary}
+        for token in self.token_dictionary:
+            print(token, self.token_dictionary[token])
         self.save_obj(fname, lmd_dump)
-
-    def save_simple(self):
-        result = []
-        for history in self.lmd:
-            result.append("{}: {}".format(history, self.lmd[history]))
-        with open(paths.lmd_simple, "w", encoding="utf-8") as f:
-            f.write("\n".join(result))
+        print("Saving lmd complete")
 
     def save_obj(self, fname, obj_to_save):
-        with open(fname, 'wb') as output:
-            pickle.dump(obj_to_save, output)
+        with open(fname, 'w', encoding="utf-8") as output:
+            output.write(pformat(obj_to_save))
 
     def get_dump(self, fname):
-        with open(fname, 'rb') as dmp:
-            dmp_obj = pickle.load(dmp)
+        with open(fname, 'r', encoding="utf-8") as dmp:
+            dmp_obj = eval(dmp.read())
         return dmp_obj
 
 class PatternManager:
@@ -409,12 +410,12 @@ class PatternGenerator:
 
 def create_and_save_lm(fname=paths.lm_dump):
     LM = LanguageModel()
-    #LM.save_model(fname)
-    LM.save_simple()
+    LM.save_model(fname)
 
 def make_patterns(lm_fname=paths.lm_dump):
     PM = PatternManager()
     LM = LanguageModel(lm_fname)
+    print(LM.token_dictionary.dic["другая"].markers)
     generator = PatternGenerator(LM)
     while not PM.satisfied():
         for lengths in [(3, 5), (6, 8), (8, 10)]:
@@ -423,10 +424,6 @@ def make_patterns(lm_fname=paths.lm_dump):
     PM.save_patterns()
     print(PM.demand)
 
-def save_simple_lmd(lm_fname=paths.lm_dump):
-    LM = LanguageModel(lm_fname)
-    LM.save_simple()
-
 if __name__ == "__main__":
     # create_and_save_lm()
-    make_patterns(None)
+    make_patterns()

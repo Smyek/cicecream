@@ -15,10 +15,8 @@ class Paths:
         self.corpus_processed = os.path.join(self.corpus, "processed")
 
         #files
-        self.lm_dump = self.service_file("LM_sicecream.pkl")
+        self.lm_dump = self.service_file("LM_sicecream.dump")
         self.patterns = self.output_file("patterns.yaml")
-
-        self.lmd_simple = self.service_file("LMD_Simple.txt")
 
         #datafiles
         self.fixlist = self.data_file("fixlist.txt")
