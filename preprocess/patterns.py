@@ -1,5 +1,4 @@
 from collections import defaultdict, Counter
-from enum import  Enum
 import random
 import copy
 from pprint import pformat
@@ -16,29 +15,14 @@ from sttk import markers_manager
 
 from paths import paths
 from corpusmanager import corpus_manager
+from custom_enums import SentenceCounters, SentenceCustomMarkers, SentenceType, TokenCustomMarkers
+from variety import Sentence_variegater
 
 from exceptions import word_exceptions
 
 from utils import YamlHandler
 
-class SentenceCounters(Enum):
-    placeholder = 1
-    m_placeholder = 2
-    f_placeholder = 3
 
-class SentenceType(Enum):
-    good = 1
-    bad = 2
-    filler = 3
-
-class SentenceCustomMarkers(Enum):
-    has_V = 1
-    has_exception = 2
-
-
-class TokenCustomMarkers(Enum):
-    is_replaceable = 1
-    exception = 2
 
 marker_to_SentCounter = {Gender.m: SentenceCounters.m_placeholder,
                          Gender.f: SentenceCounters.f_placeholder}
@@ -106,7 +90,6 @@ class LanguageModel:
             self.lmd = lm_dump["lmd"]
             self.token_dictionary = TokenDictionary()
             self.token_dictionary.load_dump(lm_dump["token_dictionary"])
-            print(self.token_dictionary.dic)
             print("LM dump loaded.")
 
     def load_thu(self):
@@ -148,8 +131,6 @@ class LanguageModel:
         self.lmd = dict(self.lmd)
         self.token_dictionary = self.token_dictionary.get_dump()
         lmd_dump = {"lmd": self.lmd, "token_dictionary": self.token_dictionary}
-        for token in self.token_dictionary:
-            print(token, self.token_dictionary[token])
         self.save_obj(fname, lmd_dump)
         print("Saving lmd complete")
 
@@ -229,6 +210,7 @@ class PatternManager:
 class PatternGenerator:
     def __init__(self, lm):
         self.lm = lm
+        self.sentence_variegater = Sentence_variegater(lm.token_dictionary)
         self.placeholder_tokens = ["он", "она"]
         #self.placeholder_markers = [Other.persn, Other.famn, Other.patrn]
         self.placeholder = "<usr{},{},{}|{}>"
@@ -237,6 +219,7 @@ class PatternGenerator:
         sentence = self.generate_raw(length)
         sentence = self.refine(sentence)
         self.create_placeholders(sentence)
+        self.sentence_variegater.variegate(sentence)
         return sentence
 
     def generate_raw(self, length):
@@ -405,9 +388,6 @@ class PatternGenerator:
             return True
         return False
 
-
-
-
 def create_and_save_lm(fname=paths.lm_dump):
     LM = LanguageModel()
     LM.save_model(fname)
@@ -415,7 +395,6 @@ def create_and_save_lm(fname=paths.lm_dump):
 def make_patterns(lm_fname=paths.lm_dump):
     PM = PatternManager()
     LM = LanguageModel(lm_fname)
-    print(LM.token_dictionary.dic["другая"].markers)
     generator = PatternGenerator(LM)
     while not PM.satisfied():
         for lengths in [(3, 5), (6, 8), (8, 10)]:

@@ -423,6 +423,18 @@ class GenderSet:
         self.counter["m"] += genders[0]
         self.counter["f"] += genders[1]
 
+def timeit(method):
+
+    def timed(*args, **kw):
+        ts = time.time()
+        result = method(*args, **kw)
+        te = time.time()
+
+        print('%r (%r, %r) %2.2f sec' % (method.__name__, args, kw, te - ts))
+        return result
+
+    return timed
+
 
 # Singletons init
 project_paths = Paths()
