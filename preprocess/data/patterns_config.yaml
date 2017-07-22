@@ -9,3 +9,6 @@ Demand:
   m3f0: 1
   m0f3: 0
 MaxFillers: 100
+Pattern:
+  min_words: 4
+  max_words: 15

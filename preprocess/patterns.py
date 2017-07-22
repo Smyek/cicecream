@@ -12,6 +12,7 @@ from sttk import TokenMarkers, TokenType
 from sttk import POS, Gender, Number, Case, Other, HumanName, Anim
 from sttk import Sentence, SentenceMarkers
 from sttk import markers_manager
+from sttk import regexlib
 
 from paths import paths
 from corpusmanager import corpus_manager
@@ -159,7 +160,8 @@ class PatternManager:
                            SentenceType.bad, SentenceMarkers.has_bastard, SentenceCustomMarkers.has_exception]:
             if sentence.markers[bad_marker]:
                 return SentenceType.bad
-        if sentence.all_words_count > 15 or sentence.all_words_count < 2:
+        if sentence.all_words_count > self.patterns_config["Pattern"]["max_words"] or \
+                        sentence.all_words_count < self.patterns_config["Pattern"]["min_words"]:
             return SentenceType.bad
         if sentence.counters[SentenceCounters.placeholder] < 1:
             return SentenceType.filler
@@ -345,7 +347,7 @@ class PatternGenerator:
         if token.toktype != TokenType.word:
             return False
         # temporary (Gender)
-        if token.gr_properties[Case] not in [Case.nom, Case.gen, Case.acc, Case.abl]:
+        if token.gr_properties[Case] not in [Case.nom, Case.gen, Case.dat, Case.acc, Case.abl, Case.ins]:
             return False
         if token.gr_properties[Gender] not in [Gender.m, Gender.f]:
             return False
@@ -397,12 +399,23 @@ def make_patterns(lm_fname=paths.lm_dump):
     LM = LanguageModel(lm_fname)
     generator = PatternGenerator(LM)
     while not PM.satisfied():
-        for lengths in [(3, 5), (6, 8), (8, 10)]:
+        for lengths in [(4, 6), (6, 8), (8, 10)]:
             sentence = generator.generate(random.randint(*lengths))
             PM.add(sentence)
     PM.save_patterns()
     print(PM.demand)
 
+def checkLM():
+    LM = LanguageModel(paths.lm_dump)
+    for token in LM.token_dictionary:
+        token = LM.token_dictionary[token]
+        if not token.is_marker(TokenMarkers.proper_noun) \
+                and regexlib.run_custom(token.text, "starts_with_upper")\
+                and not token.is_marker(TokenMarkers.bastard):
+            print(token)
+
+
 if __name__ == "__main__":
-    # create_and_save_lm()
+    create_and_save_lm()
     make_patterns()
+    checkLM()

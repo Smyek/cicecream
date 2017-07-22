@@ -1,4 +1,6 @@
-from sttk import HumanName, Gender
+import random
+
+from sttk import HumanName, Gender, POS
 
 from custom_enums import TokenCustomMarkers
 
