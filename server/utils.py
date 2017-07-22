@@ -253,6 +253,9 @@ class Paths:
         #debug
         self.test_generation = self.temp_file("generation_out.txt")
 
+    def is_file(self, filepath):
+        return os.path.isfile(filepath)
+
     def check_paths_existence(self):
         for path_to in [self.service, self.temp, self.backups]:
             if not os.path.exists(path_to):

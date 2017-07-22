@@ -24,6 +24,7 @@ def simple_test(count=1, preset_user=None, post=False):
 
     for i in range(count):
         phrase = patman.generate_phrase_cheap(preset_user)
+        time.sleep(0.5)
         if post:
             vkm.post_message(phrase)
             time.sleep(0.5)
@@ -38,6 +39,6 @@ def save_generation_out(result):
 
 if __name__ == "__main__":
     vkm._TEST_MODE = True
-    simple_test(100, TEST_PACK)
+    simple_test(140, TEST_PACK)
 
 

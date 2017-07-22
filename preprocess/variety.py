@@ -6,6 +6,7 @@ from custom_enums import TokenCustomMarkers
 
 class Sentence_variegater:
     def __init__(self, token_dictionary):
+        self.frenzy_level = 2
         self.token_dictionary = token_dictionary
 
     def variegate(self, sentence):
@@ -21,6 +22,9 @@ class Sentence_variegater:
                 token.text = "Стэнли"
             else:
                 token.text = "Ганди"
+
+    def change_flexible(self, token):
+        pass
 
     def find_similar_tokens_by_grammar(self, token_text):
         grams = self.token_dictionary[token_text].gr

@@ -75,3 +75,33 @@
 [Ивановск]ого S,famn,m,acc,sg
 [Ивановск]им S,famn,m,ins,sg
 [Ивановск]ом S,famn,m,abl,sg
+
+Гаргантюа
+[Гаргантюа] S,persn,m,nom,sg
+[Гаргантюа] S,persn,m,gen,sg
+[Гаргантюа] S,persn,m,dat,sg
+[Гаргантюа] S,persn,m,acc,sg
+[Гаргантюа] S,persn,m,ins,sg
+[Гаргантюа] S,persn,m,abl,sg
+[Гаргантюа] S,persn,m,nom,pl
+[Гаргантюа] S,persn,m,gen,pl
+[Гаргантюа] S,persn,m,dat,pl
+[Гаргантюа] S,persn,m,acc,pl
+[Гаргантюа] S,persn,m,ins,pl
+[Гаргантюа] S,persn,m,abl,pl
+
+Скумбриевич
+[Скумбриевич] S,famn,m,nom,sg
+[Скумбриевич]а S,famn,m,gen,sg
+[Скумбриевич]у S,famn,m,dat,sg
+[Скумбриевич]а S,famn,m,acc,sg
+[Скумбриевич]ем S,famn,m,ins,sg
+[Скумбриевич]е S,famn,m,abl,sg
+
+Лоханкин
+[Лоханкин] S,famn,m,nom,sg
+[Лоханкин]а S,famn,m,gen,sg
+[Лоханкин]у S,famn,m,dat,sg
+[Лоханкин]а S,famn,m,acc,sg
+[Лоханкин]ым S,famn,m,ins,sg
+[Лоханкин]е S,famn,m,abl,sg

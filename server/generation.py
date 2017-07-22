@@ -168,6 +168,9 @@ class PatternsManager:
 
         self.max_pick_patterns_attempts = 20
         self.patterns = YamlHandler(project_paths.patterns)
+        if not project_paths.is_file(project_paths.used_patterns):
+            with open(project_paths.used_patterns, "w", encoding="utf-8") as f:
+                f.write('Used_Patterns: []')
         self.used_patterns = YamlHandler(project_paths.used_patterns)
 
     def pick_pattern(self, user_pack, attempts=0):

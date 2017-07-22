@@ -407,15 +407,19 @@ def make_patterns(lm_fname=paths.lm_dump):
 
 def checkLM():
     LM = LanguageModel(paths.lm_dump)
+    proper_exceptions = ["бог", "вы", "ваш", "господний", "земля", "мадам",
+                         "марс", "нью", "родина", "северный", "южный",
+                         "совет", "солнечный", "солнце", "средний"]
     for token in LM.token_dictionary:
         token = LM.token_dictionary[token]
         if not token.is_marker(TokenMarkers.proper_noun) \
                 and regexlib.run_custom(token.text, "starts_with_upper")\
-                and not token.is_marker(TokenMarkers.bastard):
+                and not token.is_marker(TokenMarkers.bastard)\
+                and token.lex not in proper_exceptions:
             print(token)
 
 
 if __name__ == "__main__":
-    create_and_save_lm()
+    # create_and_save_lm()
     make_patterns()
-    checkLM()
+    #checkLM()
