@@ -235,11 +235,8 @@ class SICE_Console:
 
     ## other
     def generate_phrase_and_post(self):
-        from generation import PhraseGenerator
-        generator = PhraseGenerator()
-        generator.vk._TEST_MODE = True
-        phrase = generator.generate_phrase_cheap()
-        generator.vk.post_message(phrase)
+        from generation import run_generation_job
+        run_generation_job()
         server_log.add_log("phrase has been posted to the test group", logging.debug)
 
     def back(self):
