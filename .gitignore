@@ -17,3 +17,11 @@ server/__pycache__/
 server/data/users.db
 server/data/userdata/
 server/temp/
+.idea/
+preprocess/data/corpusBU/
+preprocess/data/TESTCorpus/
+preprocess/data/corpus_processed/
+preprocess/service/
+preprocess/data/output/
+server/data/used_patterns.yaml
+server/data/patterns.yaml

@@ -7,6 +7,7 @@ import datetime, time
 import sqlite3
 import atexit
 import yaml
+from collections import Counter
 
 class SingletonDecorator:
     def __init__(self, p_class):
@@ -246,6 +247,14 @@ class Paths:
         # Constant file paths
         self.config = self.data_file("config.yaml")
         self.users = self.data_file('users.db')
+        self.patterns = self.data_file('patterns.yaml')
+        self.used_patterns = self.data_file('used_patterns.yaml')
+
+        #debug
+        self.test_generation = self.temp_file("generation_out.txt")
+
+    def is_file(self, filepath):
+        return os.path.isfile(filepath)
 
     def check_paths_existence(self):
         for path_to in [self.service, self.temp, self.backups]:
@@ -347,8 +356,8 @@ class BackupManager:
         return hash_md5.hexdigest()
 
 class YamlHandler:
-    def __init__(self, document):
-        self.pth = document
+    def __init__(self, document_path):
+        self.pth = document_path
         self.doc = self.load_doc()
 
     def load_doc(self):
@@ -357,7 +366,7 @@ class YamlHandler:
 
     def save_doc(self):
         with open(self.pth, "w", encoding="utf-8") as f:
-            yaml.dump(self.doc, f, default_flow_style=False)
+            yaml.dump(self.doc, f, default_flow_style=False, allow_unicode=True)
 
     def alias_split(self, alias):
         return alias.split(".")
@@ -393,6 +402,41 @@ class TimeManager:
     def time_readable(self):
         # TODO
         pass
+
+class GenderSet:
+    def __init__(self, users=None, gs_str=None):
+        self.template = "m{}f{}"
+        self.str = gs_str
+        self.counter = Counter()
+
+        self.users_to_gs(users)
+        self.str_to_gs(gs_str)
+
+    def users_to_gs(self, users):
+        if not users:
+            return None
+        for u in users:
+            self.counter[u.gender] += 1
+        self.str = self.template.format(self.counter["m"], self.counter["f"])
+
+    def str_to_gs(self, gs_str):
+        if not gs_str:
+            return None
+        genders = gs_str.strip("m").split("f")
+        self.counter["m"] += genders[0]
+        self.counter["f"] += genders[1]
+
+def timeit(method):
+
+    def timed(*args, **kw):
+        ts = time.time()
+        result = method(*args, **kw)
+        te = time.time()
+
+        print('%r (%r, %r) %2.2f sec' % (method.__name__, args, kw, te - ts))
+        return result
+
+    return timed
 
 
 # Singletons init

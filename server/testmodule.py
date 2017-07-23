@@ -1,45 +1,44 @@
 #coding:utf-8
 import time
 
-TEST_UID = "4894606"
+from generation import PatternsManager
+from generation import VKUser, UserPack
+from generation import vkm
 
-def generate_phrases(amount=100):
-    global generator
-    for i in range(amount):
-        print(i+1)
-        phrase = generator.generate_phrase_cheap(username="Игорь Шепард", sex="m")
+from utils import project_paths
+
+patman = PatternsManager()
+
+TEST_USER = VKUser(4909962)
+TEST_USER_M2 = VKUser(9693167)
+TEST_USER_F = VKUser(11036360)
+TEST_PACK = UserPack([TEST_USER])
+TEST_PACK_F = UserPack([TEST_USER_F])
+TEST_PACK_M1F1 = UserPack([TEST_USER, TEST_USER_F])
+TEST_PACK_M2F1 = UserPack([TEST_USER, TEST_USER_M2, TEST_USER_F])
+
+def simple_test(count=1, preset_user=None, post=False):
+    results = []
+    if not preset_user:
+        preset_user = TEST_PACK
+
+    for i in range(count):
+        phrase = patman.generate_phrase_cheap(preset_user)
+        time.sleep(0.5)
+        if post:
+            vkm.post_message(phrase)
+            time.sleep(0.5)
+        results.append(phrase)
         print(phrase)
+    save_generation_out(results)
 
-def check_posting_service():
-    generator = PhraseGenerator()
-    generator.vk._TEST_MODE = True
-    generator.user_manager.group_uids = [1, 2, 3]
-    generator.user_manager.never_used = []
-    generator.user_manager.not_used_on_cycle = [3]
-    generator.user_manager.result_selection = generator.user_manager.choose_selection()
-    phrase = generator.generate_phrase_cheap()
-    print(phrase)
-    generator.user_manager.update_uids_files()
-    generator.vk.post_message(phrase)
-
-
-def simple_test():
-    global generator
-    phrase = generator.generate_phrase_cheap()
-    generator.vk.post_message(phrase)
-
-def generate100():
-    global generator
-    for i in range(100):
-        phrase = generator.generate_phrase_cheap()
-        time.sleep(0.3)
-        print(phrase)
-
+def save_generation_out(result):
+    result = "\n".join(result)
+    with open(project_paths.test_generation, "w", encoding="utf-8") as f:
+        f.write(result)
 
 if __name__ == "__main__":
-    from generation import PhraseGenerator
-    generator = PhraseGenerator()
-    generator.vk._TEST_MODE = True
-    simple_test()
+    vkm._TEST_MODE = True
+    simple_test(140, TEST_PACK)
 
 

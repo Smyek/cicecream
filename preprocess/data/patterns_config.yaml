@@ -1,0 +1,14 @@
+Demand:
+  m1f0: 4000
+  m0f1: 3000
+  m1f1: 600
+  m2f0: 100
+  m0f2: 100
+  m2f1: 1
+  m1f2: 1
+  m3f0: 1
+  m0f3: 0
+MaxFillers: 100
+Pattern:
+  min_words: 4
+  max_words: 15

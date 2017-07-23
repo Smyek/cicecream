@@ -1,0 +1,107 @@
+Рудак
+[Рудак] S,famn,m,nom,sg
+[Рудак]а S,famn,m,gen,sg
+[Рудак]у S,famn,m,dat,sg
+[Рудак]а S,famn,m,acc,sg
+[Рудак]ом S,famn,m,ins,sg
+[Рудак]е S,famn,m,abl,sg
+[Рудак]и S,famn,m,nom,pl
+[Рудак]ов S,famn,m,gen,pl
+[Рудак]ам S,famn,m,dat,pl
+[Рудак]ов S,famn,m,acc,pl
+[Рудак]ами S,famn,m,ins,pl
+[Рудак]ах S,famn,m,abl,pl
+
+Вельзевул
+[Вельзевул] S,famn,m,nom,sg
+[Вельзевул]а S,famn,m,gen,sg
+[Вельзевул]у S,famn,m,dat,sg
+[Вельзевул]а S,famn,m,acc,sg
+[Вельзевул]ом S,famn,m,ins,sg
+[Вельзевул]е S,famn,m,abl,sg
+[Вельзевул]и S,famn,m,nom,pl
+[Вельзевул]ов S,famn,m,gen,pl
+[Вельзевул]ам S,famn,m,dat,pl
+[Вельзевул]ов S,famn,m,acc,pl
+[Вельзевул]ами S,famn,m,ins,pl
+[Вельзевул]ах S,famn,m,abl,pl
+
+Волох
+[Волох] S,famn,m,nom,sg
+[Волох]а S,famn,m,gen,sg
+[Волох]у S,famn,m,dat,sg
+[Волох]а S,famn,m,acc,sg
+[Волох]ом S,famn,m,ins,sg
+[Волох]е S,famn,m,abl,sg
+[Волох]и S,famn,m,nom,pl
+[Волох]ов S,famn,m,gen,pl
+[Волох]ам S,famn,m,dat,pl
+[Волох]ов S,famn,m,acc,pl
+[Волох]ами S,famn,m,ins,pl
+[Волох]ах S,famn,m,abl,pl
+
+Гута
+[Гут]а S,persn,f,nom,sg
+[Гут]ы S,persn,f,gen,sg
+[Гут]е S,persn,f,dat,sg
+[Гут]у S,persn,f,acc,sg
+[Гут]ой S,persn,f,ins,sg
+[Гут]е S,persn,f,abl,sg
+[Гут]ы S,persn,f,nom,pl
+[Гут] S,persn,f,gen,pl
+[Гут]ам S,persn,f,dat,pl
+[Гут] S,persn,f,acc,pl
+[Гут]ами S,persn,f,ins,pl
+[Гут]ах S,persn,f,abl,pl
+
+Аятолла
+[Аятолл]а S,persn,m,nom,sg
+[Аятолл]ы S,persn,m,gen,sg
+[Аятолл]е S,persn,m,dat,sg
+[Аятолл]у S,persn,m,acc,sg
+[Аятолл]ой S,persn,m,ins,sg
+[Аятолл]е S,persn,m,abl,sg
+[Аятолл]ы S,persn,m,nom,pl
+[Аятолл] S,persn,m,gen,pl
+[Аятолл]ам S,persn,m,dat,pl
+[Аятолл] S,persn,m,acc,pl
+[Аятолл]ами S,persn,m,ins,pl
+[Аятолл]ах S,persn,m,abl,pl
+
+Ивановский
+[Ивановск]ий S,famn,m,nom,sg
+[Ивановск]ого S,famn,m,gen,sg
+[Ивановск]ому S,famn,m,dat,sg
+[Ивановск]ого S,famn,m,acc,sg
+[Ивановск]им S,famn,m,ins,sg
+[Ивановск]ом S,famn,m,abl,sg
+
+Гаргантюа
+[Гаргантюа] S,persn,m,nom,sg
+[Гаргантюа] S,persn,m,gen,sg
+[Гаргантюа] S,persn,m,dat,sg
+[Гаргантюа] S,persn,m,acc,sg
+[Гаргантюа] S,persn,m,ins,sg
+[Гаргантюа] S,persn,m,abl,sg
+[Гаргантюа] S,persn,m,nom,pl
+[Гаргантюа] S,persn,m,gen,pl
+[Гаргантюа] S,persn,m,dat,pl
+[Гаргантюа] S,persn,m,acc,pl
+[Гаргантюа] S,persn,m,ins,pl
+[Гаргантюа] S,persn,m,abl,pl
+
+Скумбриевич
+[Скумбриевич] S,famn,m,nom,sg
+[Скумбриевич]а S,famn,m,gen,sg
+[Скумбриевич]у S,famn,m,dat,sg
+[Скумбриевич]а S,famn,m,acc,sg
+[Скумбриевич]ем S,famn,m,ins,sg
+[Скумбриевич]е S,famn,m,abl,sg
+
+Лоханкин
+[Лоханкин] S,famn,m,nom,sg
+[Лоханкин]а S,famn,m,gen,sg
+[Лоханкин]у S,famn,m,dat,sg
+[Лоханкин]а S,famn,m,acc,sg
+[Лоханкин]ым S,famn,m,ins,sg
+[Лоханкин]е S,famn,m,abl,sg
