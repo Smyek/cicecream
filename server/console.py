@@ -6,7 +6,7 @@ import re
 from utils import server_log
 from utils import server_config
 from utils import database
-from utils import backups
+from utils import backups, users_autosave
 from utils import project_paths
 
 @atexit.register
@@ -126,9 +126,9 @@ class SICE_Console:
 
     # COMMANDS
     ## DATABASE options
+    @users_autosave
     def run_sql_query(self):
         squery = input("Query: ")
-        backups.make_file_backup(project_paths.users, project_paths.temp_file)
         database.run_sql(squery)
 
     def set_usedOnCycle_by_uid(self):
@@ -159,19 +159,19 @@ class SICE_Console:
         for row in database.get_user_by_col_value(colname, value):
             print(row)
 
+    @users_autosave
     def set_all_usedCount_n(self):
         count = 1
         if self.arguments_buffer:
             count = self.try_get_integer_argument()
-        backups.make_file_backup(project_paths.users, project_paths.temp_file)
         database.set_all_usedCount_n(count)
 
+    @users_autosave
     def set_all_as_usedOnCycle(self):
         condition = False
         if self.arguments_buffer:
             if self.arguments_buffer[0] == "-a":
                 condition = True
-        backups.make_file_backup(project_paths.users, project_paths.temp_file)
         database.set_all_as_usedOnCycle(condition)
 
     def print_database(self):

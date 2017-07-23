@@ -448,6 +448,15 @@ timemanager = TimeManager()
 server_config = ServerConfig()
 database = DatabaseManager()
 
+def users_autosave(fn):
+    backups.save_temporary_backup(project_paths.users)
+    def wrapper(args=None):
+        if args:
+            fn(args)
+        else:
+            fn()
+    return wrapper
+
 @atexit.register
 def close_connection():
     database.connection.close()

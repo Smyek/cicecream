@@ -9,6 +9,7 @@ from utils import project_paths
 from utils import server_config
 from utils import YamlHandler
 from utils import GenderSet
+from utils import backups, users_autosave
 
 import vk, random, re
 
@@ -203,6 +204,7 @@ class PatternsManager:
         pattern.insert_users(user_pack.list)
         return pattern.text
 
+@users_autosave
 def run_generation_job():
     user_pack = user_manager.choose_random_uid()
     patman = PatternsManager()
