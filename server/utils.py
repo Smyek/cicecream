@@ -213,13 +213,14 @@ class ServerLogger:
 
     def clean_logs_procedures(self):
         logs_size = os.path.getsize(self.server_logs_path)
-        if (logs_size / (1024*1024)) > 3:
+        if (logs_size / 1024) > 3000:
             self.delete_logs()
 
     def delete_logs(self):
+        logs = self.get_logs_list()[100:]
         with open(self.server_logs_path, "w", encoding="utf-8") as f:
-            f.write("")
-        self.add_log("Logs were cleaned")
+            f.write("\n".join(logs) + "\n")
+        self.add_log("Old logs were cleaned")
 
     def add_log(self, message, level_function=logging.debug):
         if isinstance(message, tuple):
@@ -447,6 +448,15 @@ backups = BackupManager()
 timemanager = TimeManager()
 server_config = ServerConfig()
 database = DatabaseManager()
+
+def users_autosave(fn):
+    backups.save_temporary_backup(project_paths.users)
+    def wrapper(args=None):
+        if args:
+            fn(args)
+        else:
+            fn()
+    return wrapper
 
 @atexit.register
 def close_connection():

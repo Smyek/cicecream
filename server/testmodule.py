@@ -23,7 +23,7 @@ def simple_test(count=1, preset_user=None, post=False):
         preset_user = TEST_PACK
 
     for i in range(count):
-        phrase = patman.generate_phrase_cheap(preset_user)
+        phrase = patman.generate_phrase(preset_user)
         time.sleep(0.5)
         if post:
             vkm.post_message(phrase)

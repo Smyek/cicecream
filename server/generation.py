@@ -9,6 +9,7 @@ from utils import project_paths
 from utils import server_config
 from utils import YamlHandler
 from utils import GenderSet
+from utils import backups, users_autosave
 
 import vk, random, re
 
@@ -33,17 +34,17 @@ class VKManager:
         group_id = "-92940311"
         if server_config.is_test():
             group_id = "-125307022"
-        self.vk.get(method="wall.post", message=message_text, owner_id=group_id)
+        self.vk.get(method="wall.post", message=message_text, owner_id=group_id, v="version")
 
     def get_ids(self, group_id="92940311"):
         uids = []
-        members_count = self.vk.get(method="groups.getById", group_id=group_id, fields="members_count")[0]["members_count"]
+        members_count = self.vk.get(method="groups.getById", group_id=group_id, fields="members_count", v="version")[0]["members_count"]
         for offset in range(0, members_count, 1000):
-            uids += self.vk.get(method="groups.getMembers", group_id=group_id, offset=offset)['users']
+            uids += self.vk.get(method="groups.getMembers", group_id=group_id, offset=offset, v="version")['users']
         return uids
 
     def get_name(self, id, case='nom'):
-        user = self.vk.get(method="users.get", user_ids=id, name_case=case, fields='first_name, last_name, sex')[0]
+        user = self.vk.get(method="users.get", user_ids=id, name_case=case, fields='first_name, last_name, sex', v="version")[0]
         name = "%s %s" % (user["first_name"], user["last_name"])
         genderDict = {1: "f", 2: "m", 0: "m", 3: "m"}
         gender = genderDict[user["sex"]]
@@ -163,9 +164,6 @@ class PatternsManager:
         self.current_id = None
         self.current_username = None
 
-
-        self.user_manager = UserManager()
-
         self.max_pick_patterns_attempts = 20
         self.patterns = YamlHandler(project_paths.patterns)
         if not project_paths.is_file(project_paths.used_patterns):
@@ -199,25 +197,26 @@ class PatternsManager:
         self.used_patterns.doc["Used_Patterns"].append(pattern)
         self.used_patterns.save_doc()
 
-    def generate_phrase_cheap(self, user_pack=None):
-        if user_pack is None:
-            user_pack = self.user_manager.choose_random_uid()
+    def generate_phrase(self, user_pack):
         pattern = self.pick_pattern(user_pack)
         self.add_pattern_to_used(pattern.text)
         server_log.add_log(pattern.text)
         pattern.insert_users(user_pack.list)
-        for user in user_pack:
-            self.user_manager.add_to_used(user.uid)
-
         return pattern.text
 
+@users_autosave
 def run_generation_job():
+    user_pack = user_manager.choose_random_uid()
     patman = PatternsManager()
-    phrase = patman.generate_phrase_cheap()
+    phrase = patman.generate_phrase(user_pack)
     vkm.post_message(phrase)
+
+    for user in user_pack:
+        user_manager.add_to_used(user.uid)
     return phrase
 
 vkm = VKManager()
+user_manager = UserManager()
 
 if __name__ == "__main__":
     success = False
