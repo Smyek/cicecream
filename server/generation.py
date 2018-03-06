@@ -34,17 +34,17 @@ class VKManager:
         group_id = "-92940311"
         if server_config.is_test():
             group_id = "-125307022"
-        self.vk.get(method="wall.post", message=message_text, owner_id=group_id)
+        self.vk.get(method="wall.post", message=message_text, owner_id=group_id, v="version")
 
     def get_ids(self, group_id="92940311"):
         uids = []
-        members_count = self.vk.get(method="groups.getById", group_id=group_id, fields="members_count")[0]["members_count"]
+        members_count = self.vk.get(method="groups.getById", group_id=group_id, fields="members_count", v="version")[0]["members_count"]
         for offset in range(0, members_count, 1000):
-            uids += self.vk.get(method="groups.getMembers", group_id=group_id, offset=offset)['users']
+            uids += self.vk.get(method="groups.getMembers", group_id=group_id, offset=offset, v="version")['users']
         return uids
 
     def get_name(self, id, case='nom'):
-        user = self.vk.get(method="users.get", user_ids=id, name_case=case, fields='first_name, last_name, sex')[0]
+        user = self.vk.get(method="users.get", user_ids=id, name_case=case, fields='first_name, last_name, sex', v="version")[0]
         name = "%s %s" % (user["first_name"], user["last_name"])
         genderDict = {1: "f", 2: "m", 0: "m", 3: "m"}
         gender = genderDict[user["sex"]]
