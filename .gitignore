@@ -25,3 +25,4 @@ preprocess/service/
 preprocess/data/output/
 server/data/used_patterns.yaml
 server/data/patterns.yaml
+__pycache__
