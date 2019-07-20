@@ -26,3 +26,4 @@ preprocess/data/output/
 server/data/used_patterns.yaml
 server/data/patterns.yaml
 __pycache__
+/server/data/apidata.json

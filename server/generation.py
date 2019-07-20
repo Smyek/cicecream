@@ -11,40 +11,31 @@ from utils import YamlHandler
 from utils import GenderSet
 from utils import backups, users_autosave
 
-import vk, random, re
+import random, re
+from fctools.vk.vk import VK_API
 
 pattern_user = re.compile("(<usr[0-9]+?,([mf]),(....?)\|(.+?)>)")
 
 class VKManager:
     def __init__(self):
-        self._API_DATA = {}
-        self.load_api_data()
-        self.session = vk.Session(access_token=self._API_DATA["token"])
-        self.vk = vk.API(self.session)
-
-    def load_api_data(self):
-        with open(project_paths.data_file("apidata.csv"), "r", encoding="utf-8") as f:
-            data_rows = f.read().split("\n")
-            for row in data_rows:
-                key, value = row.split(";")
-                self._API_DATA[key] = value
+        self.vk = VK_API(api_base_data_path=project_paths.data_file("apidata.json"))
 
     # post vk via smorozhenoe group
     def post_message(self, message_text):
         group_id = "-92940311"
         if server_config.is_test():
             group_id = "-125307022"
-        self.vk.get(method="wall.post", message=message_text, owner_id=group_id, v="5.0")
+        self.vk.request(method_name="wall.post",  parameters_dict=dict(message=message_text, owner_id=group_id, from_group=1, v=5.101))
 
     def get_ids(self, group_id="92940311"):
         uids = []
-        members_count = self.vk.get(method="groups.getById", group_id=group_id, fields="members_count", v="5.0")[0]["members_count"]
+        members_count = self.vk.request(method_name="groups.getById", parameters_dict=dict(group_id=group_id, fields="members_count", v=5.101))[0]["members_count"]
         for offset in range(0, members_count, 1000):
-            uids += self.vk.get(method="groups.getMembers", group_id=group_id, offset=offset, v="5.0")['users']
+            uids += self.vk.request(method_name="groups.getMembers",  parameters_dict=dict(group_id=group_id, offset=offset, v=5.101))['items']
         return uids
 
     def get_name(self, id, case='nom'):
-        user = self.vk.get(method="users.get", user_ids=id, name_case=case, fields='first_name, last_name, sex', v="5.0")[0]
+        user = self.vk.request(method_name="users.get", parameters_dict=dict(user_ids=id, name_case=case, fields='first_name, last_name, sex', v=5.101))[0]
         name = "%s %s" % (user["first_name"], user["last_name"])
         genderDict = {1: "f", 2: "m", 0: "m", 3: "m"}
         gender = genderDict[user["sex"]]
