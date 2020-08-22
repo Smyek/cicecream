@@ -31,7 +31,9 @@ class VKManager:
         uids = []
         members_count = self.vk.request(method_name="groups.getById", parameters_dict=dict(group_id=group_id, fields="members_count", v=5.101))[0]["members_count"]
         for offset in range(0, members_count, 1000):
-            uids += self.vk.request(method_name="groups.getMembers",  parameters_dict=dict(group_id=group_id, offset=offset, v=5.101))['items']
+            users = self.vk.request(method_name="groups.getMembers",  parameters_dict=dict(group_id=group_id, offset=offset, fields='deactivated', v=5.101))['items']
+            uids += [u["id"] for u in users if u.get("deactivated", None) != "deleted"]
+        # print(len(uids))
         return uids
 
     def get_name(self, id, case='nom'):
